@@ -64,6 +64,45 @@
   th.sa::after { content:' ▲'; font-size:9px; color:var(--gold); }
   th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
   .new-row td { border-left:3px solid var(--green); }
+
+  /* ── Snapshot picker bar (WPB style) ── */
+  .picker-bar { display:flex; align-items:flex-end; gap:20px; padding:16px 20px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .picker-group { display:flex; flex-direction:column; gap:4px; }
+  .picker-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .picker-sub { font-size:10px; color:var(--gold); margin-top:2px; }
+  .picker-group select { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-size:13px; height:36px; padding:0 10px; outline:none; cursor:pointer; min-width:200px; }
+  .picker-group select:focus { border-color:var(--gold-dim); }
+  .quick-wrap { display:flex; flex-direction:column; gap:4px; }
+  .quick-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .quick-btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .qb { background:var(--surface2); border:1px solid var(--border); border-radius:20px; color:var(--light); cursor:pointer; font-size:11px; font-weight:600; height:28px; padding:0 12px; white-space:nowrap; }
+  .qb:hover, .qb.active { background:var(--gold-dim); border-color:var(--gold-dim); color:#fff; }
+  .run-btn { background:var(--gold); border:none; border-radius:var(--radius); color:#000; cursor:pointer; font-size:13px; font-weight:800; height:36px; padding:0 20px; white-space:nowrap; align-self:flex-end; }
+  .run-btn:hover { background:var(--gold-lt); }
+  .stats-bar { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+  .stat { display:flex; align-items:center; gap:12px; padding:16px 24px; border-right:1px solid var(--border); flex:1; min-width:160px; }
+  .stat-icon { font-size:24px; }
+  .stat-num { font-size:28px; font-weight:800; color:var(--gold); line-height:1; }
+  .stat-num.green { color:var(--green); } .stat-num.red { color:var(--red); }
+  .stat-lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+  .stat-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .two-pane { display:grid; grid-template-columns:1fr 1fr; gap:0; min-height:300px; }
+  @media(max-width:800px){ .two-pane { grid-template-columns:1fr; } }
+  .pane { border-right:1px solid var(--border); }
+  .pane:last-child { border-right:none; }
+  .pane-header { display:flex; align-items:center; gap:10px; padding:12px 20px; border-bottom:1px solid var(--border); background:var(--surface); }
+  .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .dot.green { background:var(--green); } .dot.red { background:var(--red); }
+  .pane-title { font-size:13px; font-weight:700; color:var(--text); }
+  .pane-count { margin-left:auto; background:var(--surface2); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:11px; font-weight:700; padding:2px 10px; }
+  .snap-item { display:flex; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--border); }
+  .snap-item:hover { background:var(--surface2); }
+  .snap-item .si-tr { font-family:monospace; font-size:11px; color:var(--muted); min-width:70px; }
+  .snap-item .si-brand { font-weight:700; font-size:13px; min-width:60px; }
+  .snap-item .si-model { font-family:monospace; font-size:11px; color:var(--muted); }
+  .snap-item .si-desc { font-size:12px; color:var(--light); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .snap-item .si-price { font-weight:800; color:var(--gold); font-size:13px; margin-left:auto; white-space:nowrap; }
+  .empty-snap { padding:40px 20px; text-align:center; color:var(--muted); font-size:13px; }
 </style>
 </head>
 <body>
@@ -141,100 +180,85 @@
 
 <!-- ═══ CHANGES / SOLD ═══ -->
 <div class="tab-panel" id="tab-chgsold">
-  <div class="sb">
-    <div class="sc"><div class="sn r" id="cs1">—</div><div class="sl">Sold</div></div>
-    <div class="sc"><div class="sn r" id="cs2">—</div><div class="sl">Sold Value</div></div>
-    <div class="sc"><div class="sn g" id="cs3">—</div><div class="sl">New This Session</div></div>
-    <div class="sc"><div class="sn a" id="cs4">—</div><div class="sl">Other Status</div></div>
-  </div>
-  <div class="toolbar">
-    <div class="sw"><span class="si">🔍</span><input type="text" id="css" placeholder="Search…" oninput="rChgSold()"></div>
-    <div class="tfg"><span class="tfl">Brand</span><select class="tfs" id="csb" onchange="rChgSold()"><option value="">All</option></select></div>
-    <div class="tfg"><span class="tfl">Status</span><select class="tfs" id="csts" onchange="rChgSold()">
-      <option value="">All Non-Stock</option>
-      <option value="sold">Sold</option>
-      <option value="on hold">On Hold</option>
-      <option value="in service">In Service</option>
-    </select></div>
-    <span class="cb" id="csc">—</span>
-    <span class="cb" id="sold-sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
-    <button class="bs" id="sold-clear-btn" onclick="clearSoldSel()" style="display:none">✕ Clear</button>
-    <button class="bp" onclick="ex('sold')">⬇ Export All</button>
-    <button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
-  </div>
-  <div class="toolbar" style="gap:12px;background:var(--surface2);border-top:none;flex-wrap:wrap;align-items:flex-start;">
-    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <span class="tfl">From Snapshot</span>
-      <select class="tfs" id="sold-snap-from" style="min-width:200px;"><option value="">— select —</option></select>
+  <!-- Picker bar -->
+  <div class="picker-bar">
+    <div class="picker-group">
+      <div class="picker-label">From Snapshot <span class="picker-sub" id="cs-from-sub"></span></div>
+      <select id="cs-sel-from"><option value="">— select —</option></select>
     </div>
-    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <span class="tfl">To Snapshot</span>
-      <select class="tfs" id="sold-snap-to" style="min-width:200px;"><option value="">— select —</option></select>
+    <div class="picker-group">
+      <div class="picker-label">To Snapshot <span class="picker-sub" id="cs-to-sub"></span></div>
+      <select id="cs-sel-to"><option value="">— select —</option></select>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;">
-      <button class="bp" onclick="compareSoldSnapshots()">Compare</button>
-      <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
+    <div class="quick-wrap">
+      <div class="quick-label">Quick Compare</div>
+      <div class="quick-btns">
+        <button class="qb cs-qb" data-q="last2">Last 2 snapshots</button>
+        <button class="qb cs-qb" data-q="today">Since midnight</button>
+        <button class="qb cs-qb" data-q="2h">Last 2 hrs</button>
+        <button class="qb cs-qb" data-q="24h">Last 24 hrs</button>
+        <button class="qb cs-qb" data-q="all">All time</button>
+      </div>
     </div>
-    <span class="cb" id="sold-snap-status" style="align-self:flex-end;">Select snapshots above</span>
-    <button class="bs" onclick="clearSoldCompare()" id="sold-snap-clear" style="display:none;align-self:flex-end;">✕ Clear</button>
+    <button class="run-btn" id="cs-run-btn" onclick="runCSReport()">Run Report</button>
   </div>
-  <div id="sold-snap-new" style="display:none;padding:0 20px 8px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);padding:12px 0 6px;">🟢 New Items Added</div>
-    <div id="sold-snap-new-list"></div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-icon">🟢</div><div><div class="stat-num green" id="cs-stat-added">—</div><div class="stat-lbl">New / Added</div><div class="stat-sub" id="cs-stat-added-sub">run a report</div></div></div>
+    <div class="stat"><div class="stat-icon">🔴</div><div><div class="stat-num red" id="cs-stat-sold">—</div><div class="stat-lbl">Sold / Removed</div><div class="stat-sub" id="cs-stat-sold-sub">run a report</div></div></div>
+    <div class="stat"><div class="stat-icon">📦</div><div><div class="stat-num" id="cs-stat-stock">—</div><div class="stat-lbl">In Stock Now</div><div class="stat-sub" id="cs-stat-stock-sub">as of "to" snapshot</div></div></div>
+    <div class="stat"><div class="stat-icon">📸</div><div><div class="stat-num" id="cs-stat-snaps">—</div><div class="stat-lbl">Total Snapshots</div><div class="stat-sub">available</div></div></div>
   </div>
-  <div id="sold-snap-removed" style="display:none;padding:0 20px 8px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);padding:12px 0 6px;">🔴 Sold / Removed Items</div>
-    <div id="sold-snap-removed-list"></div>
-  </div>
-  <div class="tw">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:36px;padding:10px 8px;"><input type="checkbox" id="chk-all-sold" title="Select all visible" onchange="toggleAllSold(this.checked)" style="cursor:pointer;width:14px;height:14px;"></th>
-          <th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th><th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="csb2"></tbody>
-    </table>
+
+  <!-- Two pane results -->
+  <div class="two-pane">
+    <div class="pane">
+      <div class="pane-header"><div class="dot green"></div><span class="pane-title">New / Added</span><span class="pane-count" id="cs-count-added">—</span></div>
+      <div id="cs-list-added"><div class="empty-snap">Run a report to see new items</div></div>
+    </div>
+    <div class="pane">
+      <div class="pane-header"><div class="dot red"></div><span class="pane-title">Sold / Removed</span><span class="pane-count" id="cs-count-sold">—</span></div>
+      <div id="cs-list-sold"><div class="empty-snap">Run a report to see sold items</div></div>
+    </div>
   </div>
 </div>
 
-<!-- ═══ PRICE CHANGES ═══ -->
 <div class="tab-panel" id="tab-price">
-  <div class="sb">
-    <div class="sc"><div class="sn" id="pc1">0</div><div class="sl">Price Changes</div></div>
-    <div class="sc"><div class="sn g" id="pc2">0</div><div class="sl">Drops</div></div>
-    <div class="sc"><div class="sn r" id="pc3">0</div><div class="sl">Increases</div></div>
-    <div class="sc"><div class="sn g" id="pc4">0</div><div class="sl">New Items</div></div>
-    <div class="sc"><div class="sn r" id="pc5">0</div><div class="sl">Removed Items</div></div>
-  </div>
-  <div class="toolbar" style="flex-wrap:wrap;gap:12px;align-items:flex-start;">
-    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <span class="tfl">From Snapshot</span>
-      <select class="tfs" id="snap-from" style="min-width:200px;"><option value="">— select —</option></select>
+  <!-- Picker bar -->
+  <div class="picker-bar">
+    <div class="picker-group">
+      <div class="picker-label">From Snapshot <span class="picker-sub" id="pc-from-sub"></span></div>
+      <select id="pc-sel-from"><option value="">— select —</option></select>
     </div>
-    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
-      <span class="tfl">To Snapshot</span>
-      <select class="tfs" id="snap-to" style="min-width:200px;"><option value="">— select —</option></select>
+    <div class="picker-group">
+      <div class="picker-label">To Snapshot <span class="picker-sub" id="pc-to-sub"></span></div>
+      <select id="pc-sel-to"><option value="">— select —</option></select>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;">
-      <button class="bp" onclick="compareSnapshots()">Compare</button>
-      <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
+    <div class="quick-wrap">
+      <div class="quick-label">Quick Compare</div>
+      <div class="quick-btns">
+        <button class="qb pc-qb" data-q="last2">Last 2 snapshots</button>
+        <button class="qb pc-qb" data-q="today">Since midnight</button>
+        <button class="qb pc-qb" data-q="2h">Last 2 hrs</button>
+        <button class="qb pc-qb" data-q="24h">Last 24 hrs</button>
+        <button class="qb pc-qb" data-q="all">All time</button>
+      </div>
     </div>
-    <span class="cb" id="snap-status" style="margin-left:0;align-self:flex-end;">Select snapshots above</span>
+    <button class="run-btn" id="pc-run-btn" onclick="runPCReport()">Run Report</button>
   </div>
-  <div id="snap-new" style="display:none;padding:0 20px 8px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);padding:12px 0 6px;">🟢 New Items</div>
-    <div id="snap-new-list"></div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-icon">📈</div><div><div class="stat-num green" id="pc-stat-up">—</div><div class="stat-lbl">Price Increases</div><div class="stat-sub" id="pc-stat-up-sub">run a report</div></div></div>
+    <div class="stat"><div class="stat-icon">📉</div><div><div class="stat-num red" id="pc-stat-down">—</div><div class="stat-lbl">Price Decreases</div><div class="stat-sub" id="pc-stat-down-sub">run a report</div></div></div>
+    <div class="stat"><div class="stat-icon">💲</div><div><div class="stat-num" id="pc-stat-total">—</div><div class="stat-lbl">Items Changed</div><div class="stat-sub">between snapshots</div></div></div>
   </div>
-  <div id="snap-removed" style="display:none;padding:0 20px 8px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);padding:12px 0 6px;">🔴 Removed / Sold Items</div>
-    <div id="snap-removed-list"></div>
-  </div>
+
   <div class="tw">
     <table>
       <thead><tr><th>TR #</th><th>Brand</th><th>Model #</th><th>Description</th><th>Old Price</th><th>New Price</th><th>Change</th></tr></thead>
-      <tbody id="pcb"></tbody>
+      <tbody id="pc-body"><tr><td colspan="7" class="emp">Pick two snapshots and click Run Report.</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -825,14 +849,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
   document.querySelectorAll('.tab,.tab-panel').forEach(e => e.classList.remove('active'));
   b.classList.add('active');
   document.getElementById('tab-' + b.dataset.tab).classList.add('active');
-  if (b.dataset.tab === 'price' || b.dataset.tab === 'chgsold') loadAvailableDates();
-  // Sync date pickers between tabs
-  if (b.dataset.tab === 'chgsold') {
-    const pf = document.getElementById('snap-from');
-    const pt = document.getElementById('snap-to');
-    if (pf && pf.value) document.getElementById('sold-snap-from').value = pf.value;
-    if (pt && pt.value) document.getElementById('sold-snap-to').value = pt.value;
-  }
+  if (b.dataset.tab === 'price' || b.dataset.tab === 'chgsold') ensureSnapDates();
 }));
 
 // Inventory search/filter listeners
@@ -855,6 +872,214 @@ document.querySelectorAll('#invtbl th[data-c]').forEach(th => {
 });
 
 loadSheet();
+
+// ── SNAPSHOT STATE ───────────────────────────────────────────────────────────
+let snapDates = [];          // sorted list of available snapshot filenames
+let snapCache = {};          // filename -> { tr -> row } map
+
+// ── LOAD AVAILABLE SNAPSHOT DATES ────────────────────────────────────────────
+async function loadSnapDates() {
+  try {
+    const r = await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots', {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return [];
+    const files = await r.json();
+    return files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv','')).sort();
+  } catch(e) { return []; }
+}
+
+function fmtSnap(d) {
+  try {
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
+    if (m) {
+      const dt = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`);
+      return dt.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
+    }
+    const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m2) return new Date(m2[1]+'-'+m2[2]+'-'+m2[3]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  } catch(e) {}
+  return d;
+}
+
+function populateSnapSelects(dates) {
+  snapDates = dates;
+  ['cs-sel-from','cs-sel-to','pc-sel-from','pc-sel-to'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— select —</option>' +
+      dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
+  });
+  // Update snap count cards
+  const sc = document.getElementById('cs-stat-snaps');
+  if (sc) sc.textContent = dates.length;
+}
+
+function applyQuickFilter(dates, q) {
+  if (!dates.length) return [dates[0]||'', dates[0]||''];
+  const now = Date.now();
+  const toDate = dates[dates.length-1];
+  const parseDate = d => {
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
+    if (m) return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`).getTime();
+    const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m2) return new Date(m2[0]).getTime();
+    return 0;
+  };
+  if (q === 'last2') return [dates[dates.length-2]||dates[0], toDate];
+  const cutoffs = { today: new Date().setHours(0,0,0,0), '2h': now-2*3600000, '24h': now-24*3600000, '7d': now-7*86400000, all: 0 };
+  const cutoff = cutoffs[q] || 0;
+  const filtered = dates.filter(d => parseDate(d) >= cutoff);
+  return [filtered[0]||dates[0], toDate];
+}
+
+async function loadSnap(date) {
+  if (snapCache[date]) return snapCache[date];
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/CHRISEVO24/benny-rich-tracker/main/snapshots/${date}.csv?t=${Date.now()}`);
+    if (!r.ok) return null;
+    const text = await r.text();
+    if (text.includes('<!DOCTYPE')) return null;
+    const map = {};
+    parseCSV(text).slice(1).forEach(row => {
+      const r2 = parseRow(row);
+      if (r2.tr) map[r2.tr] = r2;
+    });
+    snapCache[date] = map;
+    return map;
+  } catch(e) { return null; }
+}
+
+// ── CHANGES / SOLD REPORT ────────────────────────────────────────────────────
+async function runCSReport() {
+  const fromDate = document.getElementById('cs-sel-from').value;
+  const toDate   = document.getElementById('cs-sel-to').value;
+  if (!fromDate || !toDate) { alert('Select both snapshots first.'); return; }
+
+  document.getElementById('cs-run-btn').textContent = 'Loading…';
+  const [fromMap, toMap] = await Promise.all([loadSnap(fromDate), loadSnap(toDate)]);
+  document.getElementById('cs-run-btn').textContent = 'Run Report';
+
+  if (!fromMap) { alert('Could not load snapshot: ' + fromDate); return; }
+  if (!toMap)   { alert('Could not load snapshot: ' + toDate);   return; }
+
+  // New: in toMap active but not in fromMap
+  const added = Object.values(toMap).filter(r => isActive(r) && !fromMap[r.tr]);
+  // Sold: in fromMap active but not in toMap or now sold
+  const sold  = Object.values(fromMap).filter(r => isActive(r) && (!toMap[r.tr] || !isActive(toMap[r.tr])));
+  // Stock in toMap
+  const stock = Object.values(toMap).filter(isActive).length;
+
+  document.getElementById('cs-stat-added').textContent = added.length;
+  document.getElementById('cs-stat-added-sub').textContent = fromDate + ' → ' + toDate;
+  document.getElementById('cs-stat-sold').textContent   = sold.length;
+  document.getElementById('cs-stat-sold-sub').textContent = fromDate + ' → ' + toDate;
+  document.getElementById('cs-stat-stock').textContent  = stock;
+  document.getElementById('cs-stat-stock-sub').textContent = 'as of ' + fmtSnap(toDate);
+
+  const snapItem = r => `<div class="snap-item">
+    <span class="si-tr">${x(r.tr)}</span>
+    <span class="si-brand">${x(r.brand)}</span>
+    <span class="si-model">${x(r.mo)}</span>
+    <span class="si-desc">${x(r.de)}</span>
+    <span class="si-price">${x(r.pr)}</span>
+    ${bdg(r.st)}
+  </div>`;
+
+  const listAdded = document.getElementById('cs-list-added');
+  listAdded.innerHTML = added.length ? added.map(snapItem).join('') : '<div class="empty-snap">No new items between these snapshots.</div>';
+  document.getElementById('cs-count-added').textContent = added.length;
+
+  const listSold = document.getElementById('cs-list-sold');
+  listSold.innerHTML = sold.length ? sold.map(snapItem).join('') : '<div class="empty-snap">No items sold between these snapshots.</div>';
+  document.getElementById('cs-count-sold').textContent = sold.length;
+}
+
+// Quick filter buttons for CS tab
+document.querySelectorAll('.cs-qb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cs-qb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const [from, to] = applyQuickFilter(snapDates, btn.dataset.q);
+    document.getElementById('cs-sel-from').value = from;
+    document.getElementById('cs-sel-to').value   = to;
+  });
+});
+
+// ── PRICE CHANGES REPORT ─────────────────────────────────────────────────────
+async function runPCReport() {
+  const fromDate = document.getElementById('pc-sel-from').value;
+  const toDate   = document.getElementById('pc-sel-to').value;
+  if (!fromDate || !toDate) { alert('Select both snapshots first.'); return; }
+
+  document.getElementById('pc-run-btn').textContent = 'Loading…';
+  const [fromMap, toMap] = await Promise.all([loadSnap(fromDate), loadSnap(toDate)]);
+  document.getElementById('pc-run-btn').textContent = 'Run Report';
+
+  if (!fromMap) { alert('Could not load: ' + fromDate); return; }
+  if (!toMap)   { alert('Could not load: ' + toDate);   return; }
+
+  const changes = Object.values(toMap).filter(r => {
+    const f = fromMap[r.tr];
+    return f && f.pn && r.pn && f.pn !== r.pn;
+  }).map(r => ({ ...r, oldPn: fromMap[r.tr].pn }));
+
+  const ups   = changes.filter(c => c.pn > c.oldPn).length;
+  const downs = changes.filter(c => c.pn < c.oldPn).length;
+
+  document.getElementById('pc-stat-up').textContent    = ups;
+  document.getElementById('pc-stat-up-sub').textContent = fromDate + ' → ' + toDate;
+  document.getElementById('pc-stat-down').textContent  = downs;
+  document.getElementById('pc-stat-down-sub').textContent = fromDate + ' → ' + toDate;
+  document.getElementById('pc-stat-total').textContent = changes.length;
+
+  const tbody = document.getElementById('pc-body');
+  if (!changes.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="emp">No price changes between these snapshots.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = changes.map(c => {
+    const diff = c.pn - c.oldPn;
+    const pct  = ((diff / c.oldPn) * 100).toFixed(1);
+    const cls  = diff > 0 ? 'cu' : 'cd';
+    return `<tr>
+      <td><span class="mno">${x(c.tr)}</span></td>
+      <td><strong>${x(c.brand)}</strong></td>
+      <td><span class="mno">${x(c.mo)}</span></td>
+      <td><span class="dsc">${x(c.de)}</span></td>
+      <td class="op">$${c.oldPn.toLocaleString()}</td>
+      <td class="np">$${c.pn.toLocaleString()}</td>
+      <td class="${cls}">${diff>0?'▲':'▼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td>
+    </tr>`;
+  }).join('');
+}
+
+// Quick filter buttons for PC tab
+document.querySelectorAll('.pc-qb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pc-qb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const [from, to] = applyQuickFilter(snapDates, btn.dataset.q);
+    document.getElementById('pc-sel-from').value = from;
+    document.getElementById('pc-sel-to').value   = to;
+  });
+});
+
+// ── AUTO LOAD SNAP DATES WHEN TAB CLICKED ────────────────────────────────────
+let snapDatesLoaded = false;
+async function ensureSnapDates() {
+  if (snapDatesLoaded && snapDates.length > 0) return;
+  const dates = await loadSnapDates();
+  populateSnapSelects(dates);
+  snapDatesLoaded = true;
+  if (dates.length >= 2) {
+    // Default: last 2 snapshots
+    ['cs-sel-from','pc-sel-from'].forEach(id => { const el = document.getElementById(id); if(el) el.value = dates[dates.length-2]; });
+    ['cs-sel-to','pc-sel-to'].forEach(id => { const el = document.getElementById(id); if(el) el.value = dates[dates.length-1]; });
+  }
+}
+
 </script>
 </body>
 </html>
