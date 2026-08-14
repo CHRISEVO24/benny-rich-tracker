@@ -12,13 +12,10 @@
     --text:#E8EAF0; --muted:#7A7F90; --light:#A0A5B5;
     --green:#2EA84F; --green-bg:#0D2818; --green-br:#1A4A28;
     --red:#D94040; --red-bg:#280D0D; --red-br:#4A1A1A;
-    --blue:#3A7FD4; --blue-bg:#0D1828; --blue-br:#1A3050;
     --radius:8px;
   }
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; font-size:14px; line-height:1.5; min-height:100vh; }
-
-  /* TAB BAR */
   .tab-bar { background:#1A1D24; display:flex; align-items:center; padding:0 20px; height:54px; gap:0; border-bottom:1px solid var(--border); }
   .logo-name { font-size:15px; font-weight:700; color:#fff; margin-right:28px; white-space:nowrap; }
   .logo-tag { font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-left:6px; }
@@ -26,8 +23,6 @@
   .tab:hover { color:#ccc; }
   .tab.active { color:var(--gold); border-bottom-color:var(--gold); }
   .tab-panel { display:none; } .tab-panel.active { display:block; }
-
-  /* TOOLBAR */
   .toolbar { display:flex; align-items:center; gap:10px; padding:14px 20px; flex-wrap:wrap; border-bottom:1px solid var(--border); background:var(--surface); }
   .search-wrap { position:relative; display:flex; align-items:center; }
   .search-icon { position:absolute; left:10px; color:var(--muted); font-size:13px; }
@@ -36,61 +31,48 @@
   .tf-group { display:flex; align-items:center; gap:6px; }
   .tf-label { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
   .tf-select { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-size:13px; height:34px; padding:0 8px; outline:none; cursor:pointer; }
-  .tf-select:focus { border-color:var(--gold-dim); }
   .count-badge { background:var(--surface2); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:12px; font-weight:700; padding:4px 12px; margin-left:auto; }
-  .btn-excel { background:var(--green); border:none; border-radius:var(--radius); color:#fff; cursor:pointer; font-size:12px; font-weight:700; height:34px; padding:0 14px; white-space:nowrap; }
-  .btn-excel:hover { opacity:.85; }
-  .btn-refresh { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); cursor:pointer; font-size:12px; font-weight:700; height:34px; padding:0 12px; }
-  .btn-refresh:hover { border-color:var(--gold-dim); color:var(--gold); }
-
-  /* TABLE */
+  .btn-primary { background:var(--gold-dim); border:none; border-radius:var(--radius); color:#fff; cursor:pointer; font-size:12px; font-weight:700; height:34px; padding:0 14px; white-space:nowrap; }
+  .btn-primary:hover { background:var(--gold); }
+  .btn-secondary { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); color:var(--muted); cursor:pointer; font-size:12px; font-weight:700; height:34px; padding:0 12px; }
+  .btn-secondary:hover { border-color:var(--gold-dim); color:var(--gold); }
   .table-wrap { overflow-x:auto; padding:0 0 40px; }
   table { width:100%; border-collapse:collapse; min-width:900px; }
-  thead tr { background:var(--surface); }
+  thead tr:first-child { background:var(--surface); }
   th { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em; padding:10px 14px; text-align:left; text-transform:uppercase; border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer; user-select:none; }
   th:hover { color:var(--light); }
   th.sort-asc::after { content:' ▲'; font-size:9px; }
   th.sort-desc::after { content:' ▼'; font-size:9px; }
   .filter-row th { padding:6px 8px; background:var(--bg); }
-  .filter-row input, .filter-row select { background:var(--surface2); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:12px; height:26px; padding:0 6px; width:100%; outline:none; }
-  .filter-row input:focus, .filter-row select:focus { border-color:var(--gold-dim); }
+  .filter-row input { background:var(--surface2); border:1px solid var(--border); border-radius:5px; color:var(--text); font-size:12px; height:26px; padding:0 6px; width:100%; outline:none; }
+  .filter-row input:focus { border-color:var(--gold-dim); }
   td { border-bottom:1px solid var(--border); padding:10px 14px; vertical-align:middle; }
   tr:hover td { background:var(--surface2); }
-  .td-brand { font-weight:800; font-size:13px; color:var(--text); }
-  .td-desc { color:var(--light); max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; }
-  .td-price { color:var(--gold); font-weight:800; font-size:13px; white-space:nowrap; }
-  .td-model { color:var(--muted); font-size:12px; font-family:monospace; }
-  .td-serial { color:var(--muted); font-size:11px; font-family:monospace; }
-  .badge-stock { background:var(--green-bg); border:1px solid var(--green-br); border-radius:20px; color:var(--green); font-size:11px; font-weight:700; padding:3px 10px; white-space:nowrap; }
+  .td-brand { font-weight:800; font-size:13px; }
+  .td-desc { color:var(--light); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; }
+  .td-price { color:var(--gold); font-weight:800; font-size:13px; }
+  .td-mono { color:var(--muted); font-size:12px; font-family:monospace; }
+  .badge-stock { background:var(--green-bg); border:1px solid var(--green-br); border-radius:20px; color:var(--green); font-size:11px; font-weight:700; padding:3px 10px; }
   .badge-sold { background:var(--red-bg); border:1px solid var(--red-br); border-radius:20px; color:var(--red); font-size:11px; font-weight:700; padding:3px 10px; }
   .badge-other { background:var(--surface2); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:11px; font-weight:700; padding:3px 10px; }
-  .td-papers { font-size:12px; color:var(--light); }
-  .empty-state { padding:60px 20px; text-align:center; color:var(--muted); }
-  .empty-icon { font-size:36px; margin-bottom:12px; }
-  .empty-title { font-size:16px; font-weight:700; color:var(--light); margin-bottom:6px; }
-
-  /* SUMMARY CARDS */
   .summary-bar { display:flex; gap:16px; padding:20px 20px 0; flex-wrap:wrap; }
   .sum-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 22px; min-width:140px; text-align:center; }
   .sum-num { font-size:28px; font-weight:800; color:var(--gold); }
   .sum-num.green { color:var(--green); }
   .sum-num.red { color:var(--red); }
   .sum-label { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-
-  /* CHANGES TAB */
-  .changes-table td.td-old { color:var(--red); font-weight:700; }
-  .changes-table td.td-new { color:var(--green); font-weight:700; }
-  .changes-table td.td-change { font-weight:800; }
-  .td-up { color:var(--red); }
-  .td-down { color:var(--green); }
-
-  /* OVERLAY */
+  .last-updated { color:var(--muted); font-size:11px; padding:8px 20px 4px; }
   .overlay { position:fixed; inset:0; background:rgba(10,12,18,.92); display:flex; align-items:center; justify-content:center; z-index:100; }
   .load-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; max-width:340px; }
-  .load-box h2 { font-size:18px; font-weight:700; margin:12px 0 6px; }
+  .load-box h2 { font-size:18px; font-weight:700; margin:12px 0 6px; color:var(--text); }
+  .load-box p { color:var(--muted); font-size:13px; }
   .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto; }
   @keyframes spin { to { transform:rotate(360deg); } }
-  .last-updated { color:var(--muted); font-size:11px; padding:8px 20px 0; }
+  .td-change-up { color:var(--red); font-weight:800; }
+  .td-change-dn { color:var(--green); font-weight:800; }
+  .td-old { color:var(--red); }
+  .td-new { color:var(--green); }
+  .empty { padding:60px 20px; text-align:center; color:var(--muted); font-size:14px; }
 </style>
 </head>
 <body>
@@ -99,7 +81,7 @@
   <div class="load-box">
     <div class="spinner"></div>
     <h2>Benny Rich Inc</h2>
-    <p style="color:var(--muted);font-size:13px;margin-top:8px;">Loading inventory from Google Sheets…</p>
+    <p>Loading inventory from Google Sheets…</p>
   </div>
 </div>
 
@@ -110,12 +92,12 @@
   <button class="tab" data-tab="changes">💲 &nbsp;Price Changes</button>
 </div>
 
-<!-- ═══ TAB 1 — CURRENT INVENTORY ═══ -->
+<!-- INVENTORY -->
 <div class="tab-panel active" id="tab-inventory">
   <div class="summary-bar">
-    <div class="sum-card"><div class="sum-num" id="cnt-total">—</div><div class="sum-label">Total In Stock</div></div>
-    <div class="sum-card"><div class="sum-num" id="cnt-value">—</div><div class="sum-label">Total Value</div></div>
-    <div class="sum-card"><div class="sum-num" id="cnt-brands">—</div><div class="sum-label">Brands</div></div>
+    <div class="sum-card"><div class="sum-num" id="s-total">—</div><div class="sum-label">In Stock</div></div>
+    <div class="sum-card"><div class="sum-num" id="s-value">—</div><div class="sum-label">Total Value</div></div>
+    <div class="sum-card"><div class="sum-num" id="s-brands">—</div><div class="sum-label">Brands</div></div>
   </div>
   <p class="last-updated" id="last-updated"></p>
   <div class="toolbar">
@@ -125,22 +107,18 @@
     </div>
     <div class="tf-group">
       <span class="tf-label">Brand</span>
-      <select class="tf-select" id="inv-brand"><option value="">All Brands</option></select>
+      <select class="tf-select" id="inv-brand"><option value="">All</option></select>
     </div>
     <div class="tf-group">
       <span class="tf-label">Type</span>
-      <select class="tf-select" id="inv-type"><option value="">All Types</option></select>
-    </div>
-    <div class="tf-group">
-      <span class="tf-label">Papers</span>
-      <select class="tf-select" id="inv-papers"><option value="">All</option></select>
+      <select class="tf-select" id="inv-type"><option value="">All</option></select>
     </div>
     <span class="count-badge" id="inv-count">—</span>
-    <button class="btn-refresh" onclick="loadSheet()">↻ Refresh</button>
-    <button class="btn-excel" onclick="exportExcel('inventory')">⬇ Export</button>
+    <button class="btn-secondary" onclick="loadSheet()">↻ Refresh</button>
+    <button class="btn-primary" onclick="exportCSV('inv')">⬇ Export</button>
   </div>
   <div class="table-wrap">
-    <table id="inv-table">
+    <table id="inv-tbl">
       <thead>
         <tr>
           <th data-col="tr">TR #</th>
@@ -149,22 +127,21 @@
           <th data-col="model">Model #</th>
           <th data-col="dial">Dial</th>
           <th data-col="desc">Description</th>
-          <th data-col="price">Price</th>
-          <th data-col="papers">Paper</th>
+          <th data-col="priceNum">Price</th>
+          <th data-col="paper">Paper</th>
           <th data-col="box">Box</th>
           <th data-col="serial">Serial #</th>
           <th data-col="date">Date</th>
-          <th data-col="status">Status</th>
+          <th>Status</th>
         </tr>
         <tr class="filter-row">
-          <th><input class="col-filter" data-col="tr" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="brand" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="type" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="model" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="dial" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="desc" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-col="price" placeholder="Filter…"></th>
-          <th></th><th></th><th></th><th></th><th></th>
+          <th><input placeholder="Filter…" oninput="colFilter('tr',this.value)"></th>
+          <th><input placeholder="Filter…" oninput="colFilter('brand',this.value)"></th>
+          <th><input placeholder="Filter…" oninput="colFilter('type',this.value)"></th>
+          <th><input placeholder="Filter…" oninput="colFilter('model',this.value)"></th>
+          <th><input placeholder="Filter…" oninput="colFilter('dial',this.value)"></th>
+          <th><input placeholder="Filter…" oninput="colFilter('desc',this.value)"></th>
+          <th></th><th></th><th></th><th></th><th></th><th></th>
         </tr>
       </thead>
       <tbody id="inv-body"></tbody>
@@ -172,59 +149,47 @@
   </div>
 </div>
 
-<!-- ═══ TAB 2 — SOLD ═══ -->
+<!-- SOLD -->
 <div class="tab-panel" id="tab-sold">
   <div class="summary-bar">
-    <div class="sum-card"><div class="sum-num red" id="cnt-sold">—</div><div class="sum-label">Sold Items</div></div>
-    <div class="sum-card"><div class="sum-num red" id="cnt-sold-val">—</div><div class="sum-label">Sold Value</div></div>
+    <div class="sum-card"><div class="sum-num red" id="s-sold">—</div><div class="sum-label">Sold Items</div></div>
+    <div class="sum-card"><div class="sum-num red" id="s-sold-val">—</div><div class="sum-label">Sold Value</div></div>
   </div>
   <div class="toolbar">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" id="sold-search" placeholder="Search sold items…">
+      <input type="text" id="sold-search" placeholder="Search sold items…" oninput="renderSold()">
     </div>
     <div class="tf-group">
       <span class="tf-label">Brand</span>
-      <select class="tf-select" id="sold-brand"><option value="">All Brands</option></select>
+      <select class="tf-select" id="sold-brand" onchange="renderSold()"><option value="">All</option></select>
     </div>
     <span class="count-badge" id="sold-count">—</span>
-    <button class="btn-excel" onclick="exportExcel('sold')">⬇ Export</button>
+    <button class="btn-primary" onclick="exportCSV('sold')">⬇ Export</button>
   </div>
   <div class="table-wrap">
-    <table id="sold-table">
+    <table>
       <thead>
-        <tr>
-          <th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th>
-          <th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th>
-        </tr>
-        <tr class="filter-row">
-          <th><input class="col-filter" data-tab="sold" data-col="tr" placeholder="Filter…"></th>
-          <th><input class="col-filter" data-tab="sold" data-col="brand" placeholder="Filter…"></th>
-          <th></th>
-          <th><input class="col-filter" data-tab="sold" data-col="model" placeholder="Filter…"></th>
-          <th></th><th></th><th></th><th></th><th></th>
-        </tr>
+        <tr><th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th><th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th></tr>
       </thead>
       <tbody id="sold-body"></tbody>
     </table>
   </div>
 </div>
 
-<!-- ═══ TAB 3 — PRICE CHANGES ═══ -->
+<!-- PRICE CHANGES -->
 <div class="tab-panel" id="tab-changes">
   <div class="summary-bar">
-    <div class="sum-card"><div class="sum-num" id="cnt-changes">—</div><div class="sum-label">Price Changes</div></div>
-    <div class="sum-card"><div class="sum-num green" id="cnt-drops">—</div><div class="sum-label">Price Drops</div></div>
-    <div class="sum-card"><div class="sum-num red" id="cnt-rises">—</div><div class="sum-label">Price Increases</div></div>
+    <div class="sum-card"><div class="sum-num" id="s-changes">0</div><div class="sum-label">Changes This Session</div></div>
+    <div class="sum-card"><div class="sum-num green" id="s-drops">0</div><div class="sum-label">Price Drops</div></div>
+    <div class="sum-card"><div class="sum-num red" id="s-rises">0</div><div class="sum-label">Price Increases</div></div>
   </div>
   <div class="toolbar">
-    <p style="color:var(--muted);font-size:13px;">Price changes are detected between refreshes during the same session.</p>
+    <p style="color:var(--muted);font-size:13px;">Price changes detected when the sheet is refreshed during the same session.</p>
   </div>
   <div class="table-wrap">
-    <table class="changes-table" id="changes-table">
-      <thead>
-        <tr><th>Brand</th><th>Model #</th><th>Description</th><th>Old Price</th><th>New Price</th><th>Change</th></tr>
-      </thead>
+    <table>
+      <thead><tr><th>Brand</th><th>Model #</th><th>Description</th><th>Old Price</th><th>New Price</th><th>Change</th></tr></thead>
       <tbody id="changes-body"></tbody>
     </table>
   </div>
@@ -234,299 +199,264 @@
 const SHEET_ID = '1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18';
 const GID      = '73934854';
 
-// Column indices (0-based) from the sheet
-const COL = { TR:0, F:1, PHOTO:2, BRAND:3, TYPE:4, MODEL:5, DIAL:6, DESC:7, PRICE:8, LINKS:9, PAPER:10, DATE:11, SERIAL:12, BOX:13, STATUS:14, MORE:15, TR2:16, NOTES:17 };
+let allRows = [];
+let prevMap  = {};  // serial -> priceNum
+let filters  = {};
+let sort     = { col: null, dir: 'asc' };
 
-let allRows = [];        // raw parsed rows
-let prevPrices = {};     // serial# → price for change detection
-let sortState = { col:null, dir:'asc' };
-let colFilters = {};
+// Column map — adjust if sheet columns shift
+const C = { TR:0, F:1, PHOTO:2, BRAND:3, TYPE:4, MODEL:5, DIAL:6, DESC:7, PRICE:8, LINKS:9, PAPER:10, DATE:11, SERIAL:12, BOX:13, STATUS:14, NOTES:17 };
 
-// ── FETCH ──────────────────────────────────────────────────────────────────
 async function loadSheet() {
   document.getElementById('overlay').style.display = 'flex';
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
-    const res  = await fetch(url);
-    const text = await res.text();
-    const rows = parseCSV(text);
-    if (rows.length < 2) throw new Error('No data');
+    // Use the Google Sheets JSON feed (works with link-shared sheets)
+    const url = `https://spreadsheets.google.com/feeds/list/${SHEET_ID}/1/public/values?alt=json`;
+    // Try JSON feed first
+    let rows = [];
+    try {
+      const r = await fetch(url);
+      if (r.ok) {
+        const json = await r.json();
+        const entries = json.feed.entry || [];
+        // Build header row from first entry keys
+        if (entries.length) {
+          const keys = Object.keys(entries[0]).filter(k => k.startsWith('gsx$'));
+          const headers = keys.map(k => k.replace('gsx$',''));
+          rows = [headers, ...entries.map(e => keys.map(k => (e[k] && e[k].$t) || ''))];
+        }
+      }
+    } catch(e) {}
 
-    // Save old prices for change detection
-    const oldPrices = {};
-    allRows.forEach(r => { if (r.serial) oldPrices[r.serial] = r.priceNum; });
+    // Fallback: try CSV export
+    if (rows.length < 2) {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+      const r = await fetch(csvUrl);
+      if (!r.ok) throw new Error('Sheet not accessible. Make sure it is shared as "Anyone with the link".');
+      const text = await r.text();
+      rows = parseCSV(text);
+    }
 
-    allRows = rows.slice(1).map(r => parseRow(r)).filter(r => r.brand || r.desc);
+    if (rows.length < 2) throw new Error('No data found in sheet.');
+
+    // Save previous prices for change detection
+    const oldMap = {};
+    allRows.forEach(r => { if (r.serial) oldMap[r.serial] = r.priceNum; });
+
+    // Parse rows — skip header
+    allRows = rows.slice(1)
+      .map(r => parseRow(r))
+      .filter(r => r.brand || r.desc || r.tr);
 
     // Detect price changes
     const changes = [];
     allRows.forEach(r => {
-      if (r.serial && oldPrices[r.serial] !== undefined && oldPrices[r.serial] !== r.priceNum) {
-        changes.push({ brand:r.brand, model:r.model, desc:r.desc, oldPrice:oldPrices[r.serial], newPrice:r.priceNum });
+      if (r.serial && oldMap[r.serial] !== undefined && oldMap[r.serial] !== r.priceNum) {
+        changes.push({ ...r, oldPrice: oldMap[r.serial] });
       }
     });
 
-    renderAll(changes);
-    populateFilters();
-    document.getElementById('last-updated').textContent = 'Last loaded: ' + new Date().toLocaleString('en-US', {timeZone:'America/New_York'}) + ' ET';
+    populateDropdowns();
+    renderInventory();
+    renderSold();
+    renderChanges(changes);
+    document.getElementById('last-updated').textContent =
+      'Last loaded: ' + new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }) + ' ET';
   } catch(e) {
+    document.getElementById('overlay').style.display = 'none';
     alert('Could not load sheet: ' + e.message);
+    return;
   }
   document.getElementById('overlay').style.display = 'none';
 }
 
-// ── CSV PARSER ─────────────────────────────────────────────────────────────
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split('\n');
-  for (const line of lines) {
-    const cols = [];
-    let inQ = false, cur = '';
+  for (const line of text.split('\n')) {
+    const cols = []; let q = false, cur = '';
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
-      if (c === '"' && !inQ) { inQ = true; }
-      else if (c === '"' && inQ) { if (line[i+1] === '"') { cur += '"'; i++; } else { inQ = false; } }
-      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += c; }
+      if (c === '"' && !q) { q = true; }
+      else if (c === '"' && q) { if (line[i+1] === '"') { cur += '"'; i++; } else q = false; }
+      else if (c === ',' && !q) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
     }
     cols.push(cur.trim());
-    rows.push(cols);
+    if (cols.some(c => c)) rows.push(cols);
   }
   return rows;
 }
 
 function parseRow(r) {
-  const priceStr = (r[COL.PRICE] || '').replace(/[$,\s]/g,'');
-  const priceNum = parseFloat(priceStr) || 0;
+  const priceStr = (r[C.PRICE] || '').replace(/[$,\s]/g, '');
   return {
-    tr:     r[COL.TR]     || '',
-    brand:  r[COL.BRAND]  || '',
-    type:   r[COL.TYPE]   || '',
-    model:  r[COL.MODEL]  || '',
-    dial:   r[COL.DIAL]   || '',
-    desc:   r[COL.DESC]   || '',
-    price:  r[COL.PRICE]  || '',
-    priceNum,
-    links:  r[COL.LINKS]  || '',
-    paper:  r[COL.PAPER]  || '',
-    date:   r[COL.DATE]   || '',
-    serial: r[COL.SERIAL] || '',
-    box:    r[COL.BOX]    || '',
-    status: r[COL.STATUS] || '',
-    notes:  r[COL.NOTES]  || '',
+    tr: r[C.TR] || '', brand: r[C.BRAND] || '', type: r[C.TYPE] || '',
+    model: r[C.MODEL] || '', dial: r[C.DIAL] || '', desc: r[C.DESC] || '',
+    price: r[C.PRICE] || '', priceNum: parseFloat(priceStr) || 0,
+    paper: r[C.PAPER] || '', date: r[C.DATE] || '',
+    serial: r[C.SERIAL] || '', box: r[C.BOX] || '',
+    status: r[C.STATUS] || '', notes: r[C.NOTES] || '',
   };
 }
 
-function isInStock(r) { return (r.status||'').toLowerCase().includes('in stock'); }
-function isSold(r)    { return (r.status||'').toLowerCase().includes('sold') || (r.status||'').toLowerCase().includes('consigned'); }
+const inStock = r => (r.status || '').toLowerCase().includes('in stock');
+const notStock = r => r.brand && !inStock(r);
 
-// ── RENDER ALL ────────────────────────────────────────────────────────────
-function renderAll(changes) {
-  renderInventory();
-  renderSold();
-  renderChanges(changes);
-}
-
-// ── INVENTORY ─────────────────────────────────────────────────────────────
 function renderInventory() {
-  const search  = (document.getElementById('inv-search').value || '').toLowerCase();
-  const brand   = document.getElementById('inv-brand').value.toLowerCase();
-  const type    = document.getElementById('inv-type').value.toLowerCase();
-  const papers  = document.getElementById('inv-papers').value.toLowerCase();
+  const search = (document.getElementById('inv-search').value || '').toLowerCase();
+  const brand  = document.getElementById('inv-brand').value.toLowerCase();
+  const type   = document.getElementById('inv-type').value.toLowerCase();
 
-  let rows = allRows.filter(r => isInStock(r));
-
-  if (search)  rows = rows.filter(r => [r.brand,r.model,r.desc,r.dial,r.serial,r.tr].join(' ').toLowerCase().includes(search));
-  if (brand)   rows = rows.filter(r => r.brand.toLowerCase() === brand);
-  if (type)    rows = rows.filter(r => r.type.toLowerCase() === type);
-  if (papers)  rows = rows.filter(r => r.paper.toLowerCase().includes(papers));
-
-  // Column filters
-  Object.entries(colFilters).forEach(([col, val]) => {
+  let rows = allRows.filter(inStock);
+  if (search) rows = rows.filter(r => [r.brand,r.model,r.desc,r.dial,r.serial,r.tr].join(' ').toLowerCase().includes(search));
+  if (brand)  rows = rows.filter(r => r.brand.toLowerCase() === brand);
+  if (type)   rows = rows.filter(r => r.type.toLowerCase() === type);
+  Object.entries(filters).forEach(([col,val]) => {
     if (val) rows = rows.filter(r => (r[col]||'').toLowerCase().includes(val));
   });
-
-  // Sort
-  if (sortState.col) {
+  if (sort.col) {
     rows.sort((a,b) => {
-      const av = sortState.col === 'price' ? a.priceNum : (a[sortState.col]||'').toLowerCase();
-      const bv = sortState.col === 'price' ? b.priceNum : (b[sortState.col]||'').toLowerCase();
-      return sortState.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+      const av = sort.col === 'priceNum' ? a.priceNum : (a[sort.col]||'').toLowerCase();
+      const bv = sort.col === 'priceNum' ? b.priceNum : (b[sort.col]||'').toLowerCase();
+      return sort.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
     });
   }
 
-  // Summary
-  const total = rows.length;
-  const value = rows.reduce((s,r) => s + r.priceNum, 0);
-  const brands = new Set(rows.map(r => r.brand)).size;
-  document.getElementById('cnt-total').textContent = total;
-  document.getElementById('cnt-value').textContent = '$' + value.toLocaleString();
-  document.getElementById('cnt-brands').textContent = brands;
-  document.getElementById('inv-count').textContent = total + ' items';
+  const val   = rows.reduce((s,r) => s + r.priceNum, 0);
+  const brands = new Set(rows.map(r => r.brand).filter(Boolean)).size;
+  document.getElementById('s-total').textContent  = rows.length;
+  document.getElementById('s-value').textContent  = '$' + val.toLocaleString();
+  document.getElementById('s-brands').textContent = brands;
+  document.getElementById('inv-count').textContent = rows.length + ' items';
 
   const tbody = document.getElementById('inv-body');
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" style="padding:40px;text-align:center;color:var(--muted);">No items match filters.</td></tr>`; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="12" class="empty">No items match filters.</td></tr>`; return; }
   tbody.innerHTML = rows.map(r => `<tr>
-    <td><span class="td-model">${x(r.tr)}</span></td>
-    <td><span class="td-brand">${x(r.brand)}</span></td>
-    <td style="font-size:12px;color:var(--light);">${x(r.type)}</td>
-    <td><span class="td-model">${x(r.model)}</span></td>
-    <td style="font-size:12px;">${x(r.dial)}</td>
+    <td><span class="td-mono">${x(r.tr)}</span></td>
+    <td><strong class="td-brand">${x(r.brand)}</strong></td>
+    <td style="font-size:12px;color:var(--light)">${x(r.type)}</td>
+    <td><span class="td-mono">${x(r.model)}</span></td>
+    <td style="font-size:12px">${x(r.dial)}</td>
     <td><span class="td-desc" title="${x(r.desc)}">${x(r.desc)}</span></td>
     <td><span class="td-price">${x(r.price)}</span></td>
-    <td class="td-papers">${x(r.paper)}</td>
-    <td class="td-papers">${x(r.box)}</td>
-    <td><span class="td-serial">${x(r.serial)}</span></td>
-    <td style="font-size:11px;color:var(--muted);">${x(r.date)}</td>
-    <td>${statusBadge(r.status)}</td>
+    <td style="font-size:12px;color:var(--light)">${x(r.paper)}</td>
+    <td style="font-size:12px;color:var(--light)">${x(r.box)}</td>
+    <td><span class="td-mono">${x(r.serial)}</span></td>
+    <td style="font-size:11px;color:var(--muted)">${x(r.date)}</td>
+    <td>${badge(r.status)}</td>
   </tr>`).join('');
 }
 
-// ── SOLD ──────────────────────────────────────────────────────────────────
 function renderSold() {
   const search = (document.getElementById('sold-search').value || '').toLowerCase();
   const brand  = document.getElementById('sold-brand').value.toLowerCase();
-
-  let rows = allRows.filter(r => isSold(r) || (!isInStock(r) && r.status));
+  let rows = allRows.filter(notStock);
   if (search) rows = rows.filter(r => [r.brand,r.model,r.desc,r.serial].join(' ').toLowerCase().includes(search));
   if (brand)  rows = rows.filter(r => r.brand.toLowerCase() === brand);
 
-  const soldVal = rows.reduce((s,r) => s + r.priceNum, 0);
-  document.getElementById('cnt-sold').textContent = rows.length;
-  document.getElementById('cnt-sold-val').textContent = '$' + soldVal.toLocaleString();
-  document.getElementById('sold-count').textContent = rows.length + ' items';
+  document.getElementById('s-sold').textContent     = rows.length;
+  document.getElementById('s-sold-val').textContent  = '$' + rows.reduce((s,r)=>s+r.priceNum,0).toLocaleString();
+  document.getElementById('sold-count').textContent  = rows.length + ' items';
 
   const tbody = document.getElementById('sold-body');
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9" style="padding:40px;text-align:center;color:var(--muted);">No sold items found.</td></tr>`; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="9" class="empty">No sold items found.</td></tr>`; return; }
   tbody.innerHTML = rows.map(r => `<tr>
-    <td><span class="td-model">${x(r.tr)}</span></td>
-    <td><span class="td-brand">${x(r.brand)}</span></td>
-    <td style="font-size:12px;color:var(--light);">${x(r.type)}</td>
-    <td><span class="td-model">${x(r.model)}</span></td>
-    <td style="font-size:12px;">${x(r.dial)}</td>
+    <td><span class="td-mono">${x(r.tr)}</span></td>
+    <td><strong class="td-brand">${x(r.brand)}</strong></td>
+    <td style="font-size:12px;color:var(--light)">${x(r.type)}</td>
+    <td><span class="td-mono">${x(r.model)}</span></td>
+    <td style="font-size:12px">${x(r.dial)}</td>
     <td><span class="td-desc" title="${x(r.desc)}">${x(r.desc)}</span></td>
     <td><span class="td-price">${x(r.price)}</span></td>
-    <td><span class="td-serial">${x(r.serial)}</span></td>
-    <td>${statusBadge(r.status)}</td>
+    <td><span class="td-mono">${x(r.serial)}</span></td>
+    <td>${badge(r.status)}</td>
   </tr>`).join('');
 }
 
-// ── PRICE CHANGES ─────────────────────────────────────────────────────────
 function renderChanges(changes) {
-  document.getElementById('cnt-changes').textContent = changes.length;
-  document.getElementById('cnt-drops').textContent   = changes.filter(c => c.newPrice < c.oldPrice).length;
-  document.getElementById('cnt-rises').textContent   = changes.filter(c => c.newPrice > c.oldPrice).length;
-
+  document.getElementById('s-changes').textContent = changes.length;
+  document.getElementById('s-drops').textContent   = changes.filter(c => c.priceNum < c.oldPrice).length;
+  document.getElementById('s-rises').textContent   = changes.filter(c => c.priceNum > c.oldPrice).length;
   const tbody = document.getElementById('changes-body');
-  if (!changes.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--muted);">No price changes detected in this session. Changes appear when prices are updated between refreshes.</td></tr>`;
-    return;
-  }
+  if (!changes.length) { tbody.innerHTML = `<tr><td colspan="6" class="empty">No price changes detected this session. Changes appear when prices update between refreshes.</td></tr>`; return; }
   tbody.innerHTML = changes.map(c => {
-    const diff = c.newPrice - c.oldPrice;
-    const pct  = c.oldPrice ? ((diff/c.oldPrice)*100).toFixed(1) : '—';
-    const cls  = diff > 0 ? 'td-up' : 'td-down';
-    const arrow = diff > 0 ? '▲' : '▼';
+    const diff = c.priceNum - c.oldPrice;
+    const pct  = c.oldPrice ? ((diff/c.oldPrice)*100).toFixed(1) : '0';
+    const cls  = diff > 0 ? 'td-change-up' : 'td-change-dn';
     return `<tr>
-      <td><span class="td-brand">${x(c.brand)}</span></td>
-      <td><span class="td-model">${x(c.model)}</span></td>
+      <td><strong>${x(c.brand)}</strong></td>
+      <td><span class="td-mono">${x(c.model)}</span></td>
       <td><span class="td-desc">${x(c.desc)}</span></td>
       <td class="td-old">$${c.oldPrice.toLocaleString()}</td>
-      <td class="td-new">$${c.newPrice.toLocaleString()}</td>
-      <td class="td-change ${cls}">${arrow} $${Math.abs(diff).toLocaleString()} (${pct}%)</td>
+      <td class="td-new">$${c.priceNum.toLocaleString()}</td>
+      <td class="${cls}">${diff>0?'▲':'▼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td>
     </tr>`;
   }).join('');
 }
 
-// ── FILTERS & SEARCH ──────────────────────────────────────────────────────
-function populateFilters() {
-  const inStock = allRows.filter(r => isInStock(r));
-  fillSelect('inv-brand',  unique(inStock, 'brand'));
-  fillSelect('inv-type',   unique(inStock, 'type'));
-  fillSelect('inv-papers', unique(inStock, 'paper'));
-  fillSelect('sold-brand', unique(allRows.filter(r => !isInStock(r)), 'brand'));
+function populateDropdowns() {
+  const stock = allRows.filter(inStock);
+  fill('inv-brand', unique(stock,'brand'));
+  fill('inv-type',  unique(stock,'type'));
+  fill('sold-brand',unique(allRows.filter(notStock),'brand'));
 }
 
-function fillSelect(id, vals) {
-  const el = document.getElementById(id);
-  const cur = el.value;
-  el.innerHTML = '<option value="">All</option>' + vals.map(v => `<option value="${x(v)}">${x(v)}</option>`).join('');
+function fill(id, vals) {
+  const el = document.getElementById(id), cur = el.value;
+  el.innerHTML = '<option value="">All</option>' + vals.map(v=>`<option value="${x(v)}">${x(v)}</option>`).join('');
   if (vals.includes(cur)) el.value = cur;
 }
 
-function unique(rows, col) {
-  return [...new Set(rows.map(r => r[col]).filter(Boolean))].sort();
-}
+function unique(rows, col) { return [...new Set(rows.map(r=>r[col]).filter(Boolean))].sort(); }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────
-function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function statusBadge(s) {
+function badge(s) {
   const sl = (s||'').toLowerCase();
   if (sl.includes('in stock')) return `<span class="badge-stock">● In Stock</span>`;
   if (sl.includes('sold'))     return `<span class="badge-sold">● Sold</span>`;
-  return `<span class="badge-other">${x(s)}</span>`;
+  return s ? `<span class="badge-other">${x(s)}</span>` : '';
 }
 
-function exportExcel(tab) {
-  const rows = tab === 'inventory'
-    ? allRows.filter(r => isInStock(r))
-    : allRows.filter(r => !isInStock(r));
+function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  const headers = ['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status','Notes'];
-  const data = [headers, ...rows.map(r => [r.tr,r.brand,r.type,r.model,r.dial,r.desc,r.price,r.paper,r.box,r.serial,r.date,r.status,r.notes])];
-  const csv = data.map(row => row.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
+function colFilter(col, val) { filters[col] = val.toLowerCase(); renderInventory(); }
+
+function exportCSV(tab) {
+  const rows = tab === 'inv' ? allRows.filter(inStock) : allRows.filter(notStock);
+  const hdr  = ['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status'];
+  const data  = [hdr, ...rows.map(r=>[r.tr,r.brand,r.type,r.model,r.dial,r.desc,r.price,r.paper,r.box,r.serial,r.date,r.status])];
+  const csv   = data.map(row=>row.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download = `benny-rich-${tab}-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
-// ── EVENT LISTENERS ───────────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  });
-});
+// Tabs
+document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.tab,.tab-panel').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+}));
 
-// Inventory filters
-['inv-search','inv-brand','inv-type','inv-papers'].forEach(id => {
-  document.getElementById(id).addEventListener('input', renderInventory);
-  document.getElementById(id).addEventListener('change', renderInventory);
-});
-
-// Sold filters
-['sold-search','sold-brand'].forEach(id => {
-  document.getElementById(id).addEventListener('input', renderSold);
-  document.getElementById(id).addEventListener('change', renderSold);
-});
-
-// Column filters
-document.querySelectorAll('.col-filter').forEach(inp => {
-  inp.addEventListener('input', () => {
-    const tab = inp.dataset.tab;
-    colFilters[inp.dataset.col] = inp.value.toLowerCase();
-    if (tab === 'sold') renderSold(); else renderInventory();
-  });
+// Filters
+['inv-search','inv-brand','inv-type'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', renderInventory);
+  el.addEventListener('change', renderInventory);
 });
 
 // Sort
-document.querySelectorAll('#inv-table th[data-col]').forEach(th => {
+document.querySelectorAll('#inv-tbl th[data-col]').forEach(th => {
   th.addEventListener('click', () => {
     const col = th.dataset.col;
-    if (sortState.col === col) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
-    else { sortState.col = col; sortState.dir = 'asc'; }
-    document.querySelectorAll('#inv-table th[data-col]').forEach(t => t.classList.remove('sort-asc','sort-desc'));
-    th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+    sort.dir = sort.col === col ? (sort.dir === 'asc' ? 'desc' : 'asc') : 'asc';
+    sort.col = col;
+    document.querySelectorAll('#inv-tbl th[data-col]').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(sort.dir === 'asc' ? 'sort-asc' : 'sort-desc');
     renderInventory();
   });
 });
 
-// ── INIT ──────────────────────────────────────────────────────────────────
 loadSheet();
 </script>
 </body>
