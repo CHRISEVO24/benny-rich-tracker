@@ -17,19 +17,19 @@ jobs:
 
       - name: Download sheet as CSV
         run: |
-          DATE=$(TZ='America/New_York' date '+%Y-%m-%d')
+          STAMP=$(TZ='America/New_York' date '+%Y-%m-%d · %I:%M %p')
+          FNAME=$(TZ='America/New_York' date '+%Y-%m-%d-%H%M')
           mkdir -p snapshots
-          curl -sL "https://docs.google.com/spreadsheets/d/1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18/export?format=csv&gid=73934854" -o "snapshots/${DATE}.csv"
-          # Also keep latest as snapshot.csv for backward compatibility
-          cp "snapshots/${DATE}.csv" snapshot.csv
-          echo "Saved snapshot for ${DATE}"
+          curl -sL "https://docs.google.com/spreadsheets/d/1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18/export?format=csv&gid=73934854" -o "snapshots/${FNAME}.csv"
+          cp "snapshots/${FNAME}.csv" snapshot.csv
+          echo "Saved snapshot: ${STAMP}"
 
       - name: Commit snapshot
         run: |
           git config --global user.name "Snapshot Bot"
           git config --global user.email "bot@bennyrich.com"
           git add snapshots/ snapshot.csv
-          git diff --staged --quiet || git commit -m "Snapshot $(TZ='America/New_York' date '+%Y-%m-%d') [skip ci]"
+          git diff --staged --quiet || git commit -m "Snapshot $(TZ='America/New_York' date '+%Y-%m-%d %I:%M %p ET') [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
