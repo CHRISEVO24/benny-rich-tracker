@@ -1,0 +1,28 @@
+name: Daily Snapshot
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download sheet as CSV
+        run: |
+          curl -sL "https://docs.google.com/spreadsheets/d/1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18/export?format=csv&gid=73934854" -o snapshot.csv
+          echo "Downloaded $(wc -l < snapshot.csv) rows"
+
+      - name: Commit snapshot
+        run: |
+          git config --global user.name "Snapshot Bot"
+          git config --global user.email "bot@bennyrich.com"
+          git add snapshot.csv
+          git diff --staged --quiet || git commit -m "Daily snapshot [skip ci] - $(date '+%Y-%m-%d')"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
