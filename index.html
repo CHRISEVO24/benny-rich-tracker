@@ -162,14 +162,21 @@
     <button class="bp" onclick="ex('sold')">⬇ Export All</button>
     <button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
   </div>
-  <div class="toolbar" style="gap:12px;background:var(--surface2);border-top:none;">
-    <span style="color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;">Snapshot Compare</span>
-    <div class="tfg"><span class="tfl">From</span><input type="date" id="sold-snap-from" class="tfs" style="width:150px;"></div>
-    <div class="tfg"><span class="tfl">To</span><input type="date" id="sold-snap-to" class="tfs" style="width:150px;"></div>
-    <button class="bp" onclick="compareSoldSnapshots()">Compare</button>
-    <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
-    <span class="cb" id="sold-snap-status">Select dates to compare</span>
-    <button class="bs" onclick="clearSoldCompare()" id="sold-snap-clear" style="display:none">✕ Clear Compare</button>
+  <div class="toolbar" style="gap:12px;background:var(--surface2);border-top:none;flex-wrap:wrap;align-items:flex-start;">
+    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <span class="tfl">From Snapshot</span>
+      <select class="tfs" id="sold-snap-from" style="min-width:200px;"><option value="">— select —</option></select>
+    </div>
+    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <span class="tfl">To Snapshot</span>
+      <select class="tfs" id="sold-snap-to" style="min-width:200px;"><option value="">— select —</option></select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;">
+      <button class="bp" onclick="compareSoldSnapshots()">Compare</button>
+      <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
+    </div>
+    <span class="cb" id="sold-snap-status" style="align-self:flex-end;">Select snapshots above</span>
+    <button class="bs" onclick="clearSoldCompare()" id="sold-snap-clear" style="display:none;align-self:flex-end;">✕ Clear</button>
   </div>
   <div id="sold-snap-new" style="display:none;padding:0 20px 8px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);padding:12px 0 6px;">🟢 New Items Added</div>
@@ -201,18 +208,20 @@
     <div class="sc"><div class="sn g" id="pc4">0</div><div class="sl">New Items</div></div>
     <div class="sc"><div class="sn r" id="pc5">0</div><div class="sl">Removed Items</div></div>
   </div>
-  <div class="toolbar" style="flex-wrap:wrap;gap:12px;">
-    <div class="tfg">
-      <span class="tfl">From</span>
-      <input type="date" id="snap-from" class="tfs" style="width:150px;">
+  <div class="toolbar" style="flex-wrap:wrap;gap:12px;align-items:flex-start;">
+    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <span class="tfl">From Snapshot</span>
+      <select class="tfs" id="snap-from" style="min-width:200px;"><option value="">— select —</option></select>
     </div>
-    <div class="tfg">
-      <span class="tfl">To</span>
-      <input type="date" id="snap-to" class="tfs" style="width:150px;">
+    <div class="tfg" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <span class="tfl">To Snapshot</span>
+      <select class="tfs" id="snap-to" style="min-width:200px;"><option value="">— select —</option></select>
     </div>
-    <button class="bp" onclick="compareSnapshots()">Compare</button>
-    <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
-    <span class="cb" id="snap-status" style="margin-left:0;">Select dates above</span>
+    <div style="display:flex;flex-direction:column;gap:6px;padding-top:16px;">
+      <button class="bp" onclick="compareSnapshots()">Compare</button>
+      <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
+    </div>
+    <span class="cb" id="snap-status" style="margin-left:0;align-self:flex-end;">Select snapshots above</span>
   </div>
   <div id="snap-new" style="display:none;padding:0 20px 8px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);padding:12px 0 6px;">🟢 New Items</div>
@@ -270,36 +279,69 @@ async function loadSnapshotByDate(date) {
 
 // Load list of available snapshot dates from GitHub API
 async function loadAvailableDates() {
-  document.getElementById('snap-status').textContent = 'Loading dates...';
+  ['snap-status','sold-snap-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'Loading...';
+  });
   try {
     const r = await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots', {
       headers: { 'Accept': 'application/vnd.github.v3+json' }
     });
-    if (!r.ok) { document.getElementById('snap-status').textContent = 'No snapshots yet'; return; }
+    if (!r.ok) {
+      ['snap-status','sold-snap-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'No snapshots yet';
+      });
+      return;
+    }
     const files = await r.json();
-    const dates = files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv',''));
-    dates.sort();
+    const dates = files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv','')).sort();
+
+    // Populate all four selects
+    ['snap-from','snap-to','sold-snap-from','sold-snap-to'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— select —</option>' +
+        dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${d}</option>`).join('');
+    });
+
+    // Default: from = second to last, to = latest
     if (dates.length >= 2) {
       document.getElementById('snap-from').value = dates[dates.length - 2];
-      document.getElementById('snap-to').value = dates[dates.length - 1];
+      document.getElementById('snap-to').value   = dates[dates.length - 1];
       document.getElementById('sold-snap-from').value = dates[dates.length - 2];
-      document.getElementById('sold-snap-to').value = dates[dates.length - 1];
-      document.getElementById('snap-status').textContent = dates.length + ' snapshots available';
+      document.getElementById('sold-snap-to').value   = dates[dates.length - 1];
+      ['snap-status','sold-snap-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = dates.length + ' snapshots available';
+      });
     } else if (dates.length === 1) {
-      document.getElementById('snap-from').value = dates[0];
-      document.getElementById('snap-to').value = dates[0];
-      document.getElementById('snap-status').textContent = '1 snapshot available — need 2 to compare';
+      ['snap-from','snap-to','sold-snap-from','sold-snap-to'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = dates[0];
+      });
+      ['snap-status','sold-snap-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '1 snapshot — need 2 to compare';
+      });
     } else {
-      document.getElementById('snap-status').textContent = 'No snapshots yet';
+      ['snap-status','sold-snap-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'No snapshots yet';
+      });
     }
   } catch(e) {
-    document.getElementById('snap-status').textContent = 'Error loading dates';
+    ['snap-status','sold-snap-status'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = 'Error loading';
+    });
   }
 }
 
 async function compareSnapshots() {
   const fromDate = document.getElementById('snap-from').value;
-  const toDate = document.getElementById('snap-to').value;
+  const toDate   = document.getElementById('snap-to').value;
   if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
   document.getElementById('snap-status').textContent = 'Loading...';
 
