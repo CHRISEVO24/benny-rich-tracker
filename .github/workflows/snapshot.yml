@@ -3,6 +3,7 @@ name: Daily Snapshot
 on:
   schedule:
     - cron: '0 10 * * *'
+    - cron: '0 20 * * *'
   workflow_dispatch:
 
 jobs:
@@ -16,15 +17,19 @@ jobs:
 
       - name: Download sheet as CSV
         run: |
-          curl -sL "https://docs.google.com/spreadsheets/d/1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18/export?format=csv&gid=73934854" -o snapshot.csv
-          echo "Downloaded $(wc -l < snapshot.csv) rows"
+          DATE=$(TZ='America/New_York' date '+%Y-%m-%d')
+          mkdir -p snapshots
+          curl -sL "https://docs.google.com/spreadsheets/d/1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18/export?format=csv&gid=73934854" -o "snapshots/${DATE}.csv"
+          # Also keep latest as snapshot.csv for backward compatibility
+          cp "snapshots/${DATE}.csv" snapshot.csv
+          echo "Saved snapshot for ${DATE}"
 
       - name: Commit snapshot
         run: |
           git config --global user.name "Snapshot Bot"
           git config --global user.email "bot@bennyrich.com"
-          git add snapshot.csv
-          git diff --staged --quiet || git commit -m "Daily snapshot [skip ci] - $(date '+%Y-%m-%d')"
+          git add snapshots/ snapshot.csv
+          git diff --staged --quiet || git commit -m "Snapshot $(TZ='America/New_York' date '+%Y-%m-%d') [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
