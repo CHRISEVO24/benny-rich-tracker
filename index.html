@@ -222,6 +222,45 @@
       <div id="cs-list-sold"><div class="empty-snap">Run a report to see sold items</div></div>
     </div>
   </div>
+
+  <!-- Live data section -->
+  <div style="border-top:2px solid var(--border);margin-top:8px;padding:12px 20px 6px;background:var(--surface);">
+    <span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Live Data — All Non-Stock Items</span>
+  </div>
+  <div class="toolbar">
+    <div class="sw"><span class="si">🔍</span><input type="text" id="css" placeholder="Search…" oninput="rChgSold()"></div>
+    <div class="tfg"><span class="tfl">Brand</span><select class="tfs" id="csb" onchange="rChgSold()"><option value="">All</option></select></div>
+    <div class="tfg"><span class="tfl">Status</span><select class="tfs" id="csts" onchange="rChgSold()">
+      <option value="">All Non-Stock</option>
+      <option value="sold">Sold</option>
+      <option value="on hold">On Hold</option>
+      <option value="in service">In Service</option>
+    </select></div>
+    <span class="cb" id="csc">—</span>
+    <span class="cb" id="sold-sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
+    <button class="bs" id="sold-clear-btn" onclick="clearSoldSel()" style="display:none">✕ Clear</button>
+    <button class="bp" onclick="ex('sold')">⬇ Export All</button>
+    <button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px;padding:10px 8px;"><input type="checkbox" id="chk-all-sold" onchange="toggleAllSold(this.checked)" style="cursor:pointer;width:14px;height:14px;"></th>
+          <th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th><th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="csb2"></tbody>
+    </table>
+  </div>
+
+  <!-- Summary cards for live data -->
+  <div class="sb" style="padding:16px 20px;">
+    <div class="sc"><div class="sn r" id="cs1">—</div><div class="sl">Sold Items</div></div>
+    <div class="sc"><div class="sn r" id="cs2">—</div><div class="sl">Sold Value</div></div>
+    <div class="sc"><div class="sn g" id="cs3">—</div><div class="sl">New This Session</div></div>
+    <div class="sc"><div class="sn a" id="cs4">—</div><div class="sl">Other Status</div></div>
+  </div>
 </div>
 
 <div class="tab-panel" id="tab-price">
