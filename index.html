@@ -297,13 +297,29 @@ async function loadAvailableDates() {
     const files = await r.json();
     const dates = files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv','')).sort();
 
+    // Format filename like "2026-08-14-0600" → "Aug 14 · 6:00 AM"
+    function fmtSnap(d) {
+      try {
+        // Format: YYYY-MM-DD-HHMM
+        const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
+        if (m) {
+          const dt = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`);
+          return dt.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
+        }
+        // Format: YYYY-MM-DD (old style)
+        const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (m2) return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      } catch(e) {}
+      return d;
+    }
+
     // Populate all four selects
     ['snap-from','snap-to','sold-snap-from','sold-snap-to'].forEach(id => {
       const sel = document.getElementById(id);
       if (!sel) return;
       const cur = sel.value;
       sel.innerHTML = '<option value="">— select —</option>' +
-        dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${d}</option>`).join('');
+        dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
     });
 
     // Default: from = second to last, to = latest
