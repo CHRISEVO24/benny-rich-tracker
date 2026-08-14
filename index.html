@@ -157,11 +157,19 @@
       <option value="in service">In Service</option>
     </select></div>
     <span class="cb" id="csc">—</span>
-    <button class="bp" onclick="ex('sold')">⬇ Export</button>
+    <span class="cb" id="sold-sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
+    <button class="bs" id="sold-clear-btn" onclick="clearSoldSel()" style="display:none">✕ Clear</button>
+    <button class="bp" onclick="ex('sold')">⬇ Export All</button>
+    <button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
   </div>
   <div class="tw">
     <table>
-      <thead><tr><th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th><th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th></tr></thead>
+      <thead>
+        <tr>
+          <th style="width:36px;padding:10px 8px;"><input type="checkbox" id="chk-all-sold" title="Select all visible" onchange="toggleAllSold(this.checked)" style="cursor:pointer;width:14px;height:14px;"></th>
+          <th>TR #</th><th>Brand</th><th>Type</th><th>Model #</th><th>Dial</th><th>Description</th><th>Price</th><th>Serial #</th><th>Status</th>
+        </tr>
+      </thead>
       <tbody id="csb2"></tbody>
     </table>
   </div>
@@ -222,6 +230,7 @@ let newTRs = new Set(); // TRs new since last load
 let flt = {};
 let srt = { col: null, dir: 'asc' };
 let selectedTRs = new Set(); // selected rows
+let selectedSoldTRs = new Set(); // selected sold rows
 
 
 // Load a snapshot CSV by date from GitHub
@@ -513,7 +522,7 @@ function rChgSold() {
   document.getElementById('csc').textContent = rs.length + ' items';
 
   const tb = document.getElementById('csb2');
-  if (!rs.length) { tb.innerHTML = '<tr><td colspan="9" class="emp">No items here yet.</td></tr>'; return; }
+  if (!rs.length) { tb.innerHTML = '<tr><td colspan="10" class="emp">No items here yet.</td></tr>'; return; }
   tb.innerHTML = rs.map(r => `<tr${newTRs.has(r.tr) ? ' class="new-row"' : ''}>
     <td><span class="mno">${x(r.tr)}</span></td>
     <td><strong>${x(r.brand)}</strong></td>
@@ -579,8 +588,9 @@ function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function cf(k,v) { flt[k] = v.toLowerCase(); rInv(); }
 
 function ex(tab) {
-  const rs = tab === 'inv' ? rows.filter(isActive)
-           : tab === 'sel' ? rows.filter(r => selectedTRs.has(r.tr))
+  const rs = tab === 'inv'     ? rows.filter(isActive)
+           : tab === 'sel'     ? rows.filter(r => selectedTRs.has(r.tr))
+           : tab === 'soldsel' ? rows.filter(r => selectedSoldTRs.has(r.tr))
            : rows.filter(r => !isActive(r) && r.brand);
   const h = ['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status','Notes'];
   const d = [h, ...rs.map(r => [r.tr,r.brand,r.type,r.model,r.dial,r.desc,r.price,r.paper,r.box,r.serial,r.date,r.status,r.notes])];
@@ -629,6 +639,40 @@ function updateSelUI() {
   document.getElementById('sel-count').style.display = n > 0 ? '' : 'none';
   document.getElementById('clear-sel-btn').style.display = n > 0 ? '' : 'none';
   document.getElementById('exp-sel-btn').style.display = n > 0 ? '' : 'none';
+}
+
+function toggleSoldRow(e, tr) {
+  if (e.target.type === 'checkbox') {
+    if (e.target.checked) selectedSoldTRs.add(tr); else selectedSoldTRs.delete(tr);
+  } else {
+    if (selectedSoldTRs.has(tr)) selectedSoldTRs.delete(tr); else selectedSoldTRs.add(tr);
+  }
+  updateSoldSelUI();
+  rChgSold();
+}
+
+function toggleAllSold(checked) {
+  document.querySelectorAll('.sold-chk').forEach(c => {
+    if (checked) selectedSoldTRs.add(c.dataset.tr); else selectedSoldTRs.delete(c.dataset.tr);
+  });
+  updateSoldSelUI();
+  rChgSold();
+}
+
+function clearSoldSel() {
+  selectedSoldTRs.clear();
+  const chk = document.getElementById('chk-all-sold');
+  if (chk) chk.checked = false;
+  updateSoldSelUI();
+  rChgSold();
+}
+
+function updateSoldSelUI() {
+  const n = selectedSoldTRs.size;
+  document.getElementById('sold-sel-count').textContent = n + ' selected';
+  document.getElementById('sold-sel-count').style.display = n > 0 ? '' : 'none';
+  document.getElementById('sold-clear-btn').style.display = n > 0 ? '' : 'none';
+  document.getElementById('exp-sold-sel-btn').style.display = n > 0 ? '' : 'none';
 }
 
 // Tab switching
