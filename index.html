@@ -264,822 +264,341 @@
 </div>
 
 <script>
-// Column indices (0-based) — verified from CSV export
-const C = {
-  TR:0, PHOTO:1, BRAND:2, TYPE:3, MODEL:4, DIAL:5,
-  DESC:6, PRICE:7, LINKS:8, PAPER:9, DATE:10,
-  SERIAL:11, BOX:12, STATUS:13, MORE:14, NOTES:15
-};
 
 const SID = '1j0I_0qWjtwY7ztgw9J2eRj7RCU1pkBems_wwlgkIi18';
 const GID = '73934854';
+const C   = { TR:0, PHOTO:1, BRAND:2, TYPE:3, MODEL:4, DIAL:5, DESC:6, PRICE:7, LINKS:8, PAPER:9, DATE:10, SERIAL:11, BOX:12, STATUS:13, NOTES:15 };
 
-let rows = [];      // all parsed rows
-let prevMap = {};   // tr -> priceNum for change detection
-let newTRs = new Set(); // TRs new since last load
-let flt = {};
-let srt = { col: null, dir: 'asc' };
-let selectedTRs = new Set(); // selected rows
-let selectedSoldTRs = new Set(); // selected sold rows
+let rows = [], flt = {}, srt = { col:null, dir:'asc' };
+let selectedTRs = new Set(), selectedSoldTRs = new Set();
+let newTRs = new Set();
+let snapDates = [], snapCache = {}, snapLoaded = false;
 
-
-// Load a snapshot CSV by date from GitHub
-async function loadSnapshotByDate(date) {
-  try {
-    const url = `https://raw.githubusercontent.com/CHRISEVO24/benny-rich-tracker/main/snapshots/${date}.csv?t=${Date.now()}`;
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    const text = await r.text();
-    if (text.includes('<!DOCTYPE')) return null;
-    const parsed = parseCSV(text);
-    const map = {};
-    parsed.slice(1).forEach(r => {
-      const row = parseRow(r);
-      if (row.tr) map[row.tr] = row;
-    });
-    return map;
-  } catch(e) { return null; }
-}
-
-// Load list of available snapshot dates from GitHub API
-async function loadAvailableDates() {
-  ['snap-status','sold-snap-status'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = 'Loading...';
-  });
-  try {
-    const r = await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots', {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    if (!r.ok) {
-      ['snap-status','sold-snap-status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = 'No snapshots yet';
-      });
-      return;
-    }
-    const files = await r.json();
-    const dates = files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv','')).sort();
-
-    // Format filename like "2026-08-14-0600" → "Aug 14 · 6:00 AM"
-    function fmtSnap(d) {
-      try {
-        // Format: YYYY-MM-DD-HHMM
-        const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
-        if (m) {
-          const dt = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`);
-          return dt.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
-        }
-        // Format: YYYY-MM-DD (old style)
-        const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        if (m2) return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-      } catch(e) {}
-      return d;
-    }
-
-    // Populate all four selects
-    ['snap-from','snap-to','sold-snap-from','sold-snap-to'].forEach(id => {
-      const sel = document.getElementById(id);
-      if (!sel) return;
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">— select —</option>' +
-        dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
-    });
-
-    // Default: from = second to last, to = latest
-    if (dates.length >= 2) {
-      document.getElementById('snap-from').value = dates[dates.length - 2];
-      document.getElementById('snap-to').value   = dates[dates.length - 1];
-      document.getElementById('sold-snap-from').value = dates[dates.length - 2];
-      document.getElementById('sold-snap-to').value   = dates[dates.length - 1];
-      ['snap-status','sold-snap-status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = dates.length + ' snapshots available';
-      });
-    } else if (dates.length === 1) {
-      ['snap-from','snap-to','sold-snap-from','sold-snap-to'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = dates[0];
-      });
-      ['snap-status','sold-snap-status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '1 snapshot — need 2 to compare';
-      });
-    } else {
-      ['snap-status','sold-snap-status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = 'No snapshots yet';
-      });
-    }
-  } catch(e) {
-    ['snap-status','sold-snap-status'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = 'Error loading';
-    });
-  }
-}
-
-async function compareSnapshots() {
-  const fromDate = document.getElementById('snap-from').value;
-  const toDate   = document.getElementById('snap-to').value;
-  if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
-  document.getElementById('snap-status').textContent = 'Loading...';
-
-  const [fromMap, toMap] = await Promise.all([
-    loadSnapshotByDate(fromDate),
-    loadSnapshotByDate(toDate)
-  ]);
-
-  if (!fromMap) { document.getElementById('snap-status').textContent = `No snapshot for ${fromDate}`; return; }
-  if (!toMap)   { document.getElementById('snap-status').textContent = `No snapshot for ${toDate}`; return; }
-
-  // Price changes
-  const priceChanges = [];
-  Object.values(toMap).forEach(toRow => {
-    const fromRow = fromMap[toRow.tr];
-    if (fromRow && fromRow.pn !== 0 && toRow.pn !== 0 && fromRow.pn !== toRow.pn) {
-      priceChanges.push({ ...toRow, oldPn: fromRow.pn });
-    }
-  });
-
-  // New items (in toMap but not fromMap)
-  const newItems = Object.values(toMap).filter(r => !fromMap[r.tr] && r.brand);
-
-  // Removed items (in fromMap but not toMap)
-  const removedItems = Object.values(fromMap).filter(r => !toMap[r.tr] && r.brand);
-
-  document.getElementById('pc1').textContent = priceChanges.length;
-  document.getElementById('pc2').textContent = priceChanges.filter(c => c.pn < c.oldPn).length;
-  document.getElementById('pc3').textContent = priceChanges.filter(c => c.pn > c.oldPn).length;
-  document.getElementById('pc4').textContent = newItems.length;
-  document.getElementById('pc5').textContent = removedItems.length;
-  document.getElementById('snap-status').textContent = `${fromDate} → ${toDate}`;
-
-  // New items list
-  const newDiv = document.getElementById('snap-new');
-  const newList = document.getElementById('snap-new-list');
-  if (newItems.length) {
-    newDiv.style.display = 'block';
-    newList.innerHTML = newItems.map(r => `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
-      <span class="mno" style="min-width:80px">${x(r.tr)}</span>
-      <strong style="min-width:60px">${x(r.brand)}</strong>
-      <span class="mno">${x(r.model)}</span>
-      <span class="dsc">${x(r.desc)}</span>
-      <span class="prc" style="margin-left:auto">${x(r.price)}</span>
-    </div>`).join('');
-  } else { newDiv.style.display = 'none'; }
-
-  // Removed items list
-  const remDiv = document.getElementById('snap-removed');
-  const remList = document.getElementById('snap-removed-list');
-  if (removedItems.length) {
-    remDiv.style.display = 'block';
-    remList.innerHTML = removedItems.map(r => `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
-      <span class="mno" style="min-width:80px">${x(r.tr)}</span>
-      <strong style="min-width:60px">${x(r.brand)}</strong>
-      <span class="mno">${x(r.model)}</span>
-      <span class="dsc">${x(r.desc)}</span>
-      <span class="prc" style="margin-left:auto">${x(r.price)}</span>
-    </div>`).join('');
-  } else { remDiv.style.display = 'none'; }
-
-  rPriceChg(priceChanges);
-}
-
-// Keep for initial load comparison vs latest snapshot
-async function loadSnapshot() {
-  try {
-    const url = 'https://raw.githubusercontent.com/CHRISEVO24/benny-rich-tracker/main/snapshot.csv';
-    const r = await fetch(url + '?t=' + Date.now());
-    if (!r.ok) return {};
-    const text = await r.text();
-    if (text.includes('<!DOCTYPE')) return {};
-    const parsed = parseCSV(text);
-    const map = {};
-    parsed.slice(1).forEach(r => {
-      const row = parseRow(r);
-      if (row.tr) map[row.tr] = row;
-    });
-    return map;
-  } catch(e) { return {}; }
-}
-
-async function loadSheet() {
-  document.getElementById('ov').style.display = 'flex';
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${GID}`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('Could not fetch sheet. Check sharing settings.');
-    const text = await r.text();
-    if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('Google requires sign-in to access this sheet. Set sharing to "Anyone with the link - Viewer".');
-    
-    const parsed = parseCSV(text);
-    if (parsed.length < 2) throw new Error('No data rows found.');
-
-    // Save previous state for change detection
-    const oldPrices = {};
-    const oldTRs = new Set(rows.map(r => r.tr).filter(Boolean));
-    rows.forEach(r => { if (r.tr) oldPrices[r.tr] = r.pn; });
-
-    rows = parsed.slice(1)
-      .map(r => parseRow(r))
-      .filter(r => r.brand || r.tr);
-
-    // Load snapshot for historical comparison
-    const snapMap = await loadSnapshot();
-
-    // Detect new TRs (in live but not in snapshot)
-    const curTRs = new Set(rows.map(r => r.tr).filter(Boolean));
-    const snapTRs = new Set(Object.keys(snapMap));
-    newTRs = snapTRs.size > 0 ? new Set([...curTRs].filter(t => !snapTRs.has(t))) : new Set();
-
-    // Price changes vs snapshot (persistent across sessions)
-    const priceChanges = rows
-      .filter(r => r.tr && snapMap[r.tr] && snapMap[r.tr].pn !== 0 && snapMap[r.tr].pn !== r.pn)
-      .map(r => ({ ...r, oldPn: snapMap[r.tr].pn }));
-
-    populateDropdowns();
-    rInv();
-    rChgSold();
-    rPriceChg(priceChanges);
-
-    document.getElementById('lu').textContent = 
-      'Last loaded: ' + new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }) + ' ET';
-  } catch(e) {
-    document.getElementById('ov').style.display = 'none';
-    alert('Error: ' + e.message);
-    return;
-  }
-  document.getElementById('ov').style.display = 'none';
-}
-
+// ── PARSE ──────────────────────────────────────────────────────────────────
 function parseCSV(text) {
-  const rows = [];
+  const out = [];
   for (const ln of text.split('\n')) {
-    const cols = []; let q = false, cur = '';
-    for (let i = 0; i < ln.length; i++) {
-      const c = ln[i];
-      if (c === '"' && !q) q = true;
-      else if (c === '"' && q) { if (ln[i+1] === '"') { cur += '"'; i++; } else q = false; }
-      else if (c === ',' && !q) { cols.push(cur.trim()); cur = ''; }
-      else cur += c;
+    const cols=[]; let q=false, cur='';
+    for (let i=0;i<ln.length;i++){
+      const c=ln[i];
+      if(c==='"'&&!q)q=true;
+      else if(c==='"'&&q){if(ln[i+1]==='"'){cur+='"';i++;}else q=false;}
+      else if(c===','&&!q){cols.push(cur.trim());cur='';}
+      else cur+=c;
     }
     cols.push(cur.trim());
-    if (cols.some(c => c)) rows.push(cols);
+    if(cols.some(c=>c))out.push(cols);
   }
-  return rows;
+  return out;
 }
 
 function parseRow(r) {
-  const ps = (r[C.PRICE] || '').replace(/[$,\s]/g, '');
-  return {
-    tr:     r[C.TR]     || '',
-    brand:  r[C.BRAND]  || '',
-    type:   r[C.TYPE]   || '',
-    model:  r[C.MODEL]  || '',
-    dial:   r[C.DIAL]   || '',
-    desc:   r[C.DESC]   || '',
-    price:  r[C.PRICE]  || '',
-    pn:     parseFloat(ps) || 0,
-    paper:  r[C.PAPER]  || '',
-    date:   r[C.DATE]   || '',
-    serial: r[C.SERIAL] || '',
-    box:    r[C.BOX]    || '',
-    status: r[C.STATUS] || '',
-    notes:  r[C.NOTES]  || '',
-  };
+  const ps = (r[C.PRICE]||'').replace(/[$,\s]/g,'');
+  return { tr:r[C.TR]||'', brand:r[C.BRAND]||'', ty:r[C.TYPE]||'',
+    mo:r[C.MODEL]||'', di:r[C.DIAL]||'', de:r[C.DESC]||'',
+    pr:r[C.PRICE]||'', pn:parseFloat(ps)||0, pa:r[C.PAPER]||'',
+    dt:r[C.DATE]||'', se:r[C.SERIAL]||'', bo:r[C.BOX]||'',
+    st:r[C.STATUS]||'', no:r[C.NOTES]||'' };
 }
 
-// Status helpers
-const isActive = r => {
-  const s = (r.status || '').toLowerCase();
-  return s.includes('in stock') || s.includes('on hold') || s.includes('in service') || s.includes('consigned');
-};
-const isStock  = r => (r.status || '').toLowerCase().includes('in stock');
-const isSold   = r => (r.status || '').toLowerCase().includes('sold');
+const isActive = r => { const s=(r.st||'').toLowerCase(); return s.includes('in stock')||s.includes('on hold')||s.includes('in service')||s.includes('consigned'); };
+const isSold   = r => (r.st||'').toLowerCase().includes('sold');
 
-function rInv() {
-  const search = (document.getElementById('is').value || '').toLowerCase();
-  const brand  = document.getElementById('ib').value.toLowerCase();
-  const type   = document.getElementById('it').value.toLowerCase();
-  const status = document.getElementById('ist').value.toLowerCase();
-
-  let rs = rows.filter(isActive);
-  if (search) rs = rs.filter(r => [r.brand,r.model,r.desc,r.dial,r.serial,r.tr].join(' ').toLowerCase().includes(search));
-  if (brand)  rs = rs.filter(r => r.brand.toLowerCase() === brand);
-  if (type)   rs = rs.filter(r => r.type.toLowerCase() === type);
-  if (status) rs = rs.filter(r => (r.status||'').toLowerCase().includes(status));
-  Object.entries(flt).forEach(([k,v]) => { if(v) rs = rs.filter(r => (r[k]||'').toLowerCase().includes(v)); });
-
-  if (srt.col) {
-    rs.sort((a,b) => {
-      const av = srt.col === 'pn' ? a.pn : (a[srt.col]||'').toLowerCase();
-      const bv = srt.col === 'pn' ? b.pn : (b[srt.col]||'').toLowerCase();
-      return srt.dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
-    });
+// ── LOAD LIVE SHEET ─────────────────────────────────────────────────────────
+async function loadSheet() {
+  document.getElementById('ov').style.display='flex';
+  try {
+    const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${GID}`;
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('Sheet not accessible.');
+    const text=await r.text();
+    if(text.includes('<!DOCTYPE')) throw new Error('Google requires sign-in. Set sharing to "Anyone with the link".');
+    const parsed=parseCSV(text);
+    if(parsed.length<2) throw new Error('No data found.');
+    rows = parsed.slice(1).map(parseRow).filter(r=>r.brand||r.tr);
+    populateDropdowns();
+    rInv();
+    rChgSold();
+    document.getElementById('lu').textContent='Last loaded: '+new Date().toLocaleString('en-US',{timeZone:'America/New_York'})+' ET';
+  } catch(e) {
+    document.getElementById('ov').style.display='none';
+    alert('Error: '+e.message);
+    return;
   }
+  document.getElementById('ov').style.display='none';
+}
 
-  const allActive = rows.filter(isActive);
-  document.getElementById('s1').textContent = allActive.filter(isStock).length;
-  document.getElementById('s2').textContent = '$' + allActive.filter(isStock).reduce((s,r) => s + r.pn, 0).toLocaleString();
-  document.getElementById('s3').textContent = new Set(allActive.filter(isStock).map(r => r.brand).filter(Boolean)).size;
-  document.getElementById('s4').textContent = allActive.filter(r => (r.status||'').toLowerCase().includes('on hold')).length;
-  document.getElementById('ic').textContent = rs.length + ' items';
+// ── INVENTORY TAB ────────────────────────────────────────────────────────────
+function rInv() {
+  const search=(document.getElementById('is').value||'').toLowerCase();
+  const brand=document.getElementById('ib').value.toLowerCase();
+  const type=document.getElementById('it').value.toLowerCase();
+  const status=document.getElementById('ist').value.toLowerCase();
 
-  const tb = document.getElementById('invbody');
-  if (!rs.length) { tb.innerHTML = '<tr><td colspan="13" class="emp">No items match filters.</td></tr>'; return; }
-  tb.innerHTML = rs.map(r => `<tr${newTRs.has(r.tr) ? ' class="new-row"' : ''}${selectedTRs.has(r.tr) ? ' style="background:rgba(58,127,212,.12)"' : ''} onclick="toggleRow(event,'${r.tr}')">
+  let rs=rows.filter(isActive);
+  if(search) rs=rs.filter(r=>[r.brand,r.mo,r.de,r.di,r.se,r.tr].join(' ').toLowerCase().includes(search));
+  if(brand)  rs=rs.filter(r=>r.brand.toLowerCase()===brand);
+  if(type)   rs=rs.filter(r=>r.ty.toLowerCase()===type);
+  if(status) rs=rs.filter(r=>(r.st||'').toLowerCase().includes(status));
+  Object.entries(flt).forEach(([k,v])=>{ if(v) rs=rs.filter(r=>(r[k]||'').toLowerCase().includes(v)); });
+
+  if(srt.col) rs.sort((a,b)=>{
+    const av=srt.col==='pn'?a.pn:(a[srt.col]||'').toLowerCase();
+    const bv=srt.col==='pn'?b.pn:(b[srt.col]||'').toLowerCase();
+    return srt.dir==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+  });
+
+  const allActive=rows.filter(isActive);
+  document.getElementById('s1').textContent=allActive.filter(r=>(r.st||'').toLowerCase().includes('in stock')).length;
+  document.getElementById('s2').textContent='$'+allActive.filter(r=>(r.st||'').toLowerCase().includes('in stock')).reduce((s,r)=>s+r.pn,0).toLocaleString();
+  document.getElementById('s3').textContent=new Set(allActive.filter(r=>(r.st||'').toLowerCase().includes('in stock')).map(r=>r.brand).filter(Boolean)).size;
+  document.getElementById('s4').textContent=allActive.filter(r=>(r.st||'').toLowerCase().includes('on hold')).length;
+  document.getElementById('ic').textContent=rs.length+' items';
+
+  const tb=document.getElementById('invbody');
+  if(!rs.length){tb.innerHTML='<tr><td colspan="13" class="emp">No items match filters.</td></tr>';return;}
+  tb.innerHTML=rs.map(r=>`<tr${selectedTRs.has(r.tr)?' style="background:rgba(58,127,212,.12)"':''} onclick="toggleRow(event,'${r.tr}')" style="cursor:pointer">
     <td style="padding:10px 8px;" onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-tr="${r.tr}" ${selectedTRs.has(r.tr)?'checked':''} onchange="toggleRow(event,'${r.tr}')" style="cursor:pointer;width:14px;height:14px;"></td>
     <td><span class="mno">${x(r.tr)}</span></td>
     <td><strong>${x(r.brand)}</strong></td>
-    <td style="font-size:12px;color:var(--light)">${x(r.type)}</td>
-    <td><span class="mno">${x(r.model)}</span></td>
-    <td style="font-size:12px">${x(r.dial)}</td>
-    <td><span class="dsc" title="${x(r.desc)}">${x(r.desc)}</span></td>
-    <td><span class="prc">${x(r.price)}</span></td>
-    <td style="font-size:12px;color:var(--light)">${x(r.paper)}</td>
-    <td style="font-size:12px;color:var(--light)">${x(r.box)}</td>
-    <td><span class="mno">${x(r.serial)}</span></td>
-    <td style="font-size:11px;color:var(--muted)">${x(r.date)}</td>
-    <td>${bdg(r.status)}</td>
+    <td style="font-size:12px;color:var(--light)">${x(r.ty)}</td>
+    <td><span class="mno">${x(r.mo)}</span></td>
+    <td style="font-size:12px">${x(r.di)}</td>
+    <td><span class="dsc" title="${x(r.de)}">${x(r.de)}</span></td>
+    <td><span class="prc">${x(r.pr)}</span></td>
+    <td style="font-size:12px;color:var(--light)">${x(r.pa)}</td>
+    <td style="font-size:12px;color:var(--light)">${x(r.bo)}</td>
+    <td><span class="mno">${x(r.se)}</span></td>
+    <td style="font-size:11px;color:var(--muted)">${x(r.dt)}</td>
+    <td>${bdg(r.st)}</td>
   </tr>`).join('');
 }
 
+// ── CHANGES / SOLD TAB ───────────────────────────────────────────────────────
 function rChgSold() {
-  const search = (document.getElementById('css').value || '').toLowerCase();
-  const brand  = document.getElementById('csb').value.toLowerCase();
-  const status = document.getElementById('csts').value.toLowerCase();
+  const search=(document.getElementById('css').value||'').toLowerCase();
+  const brand=document.getElementById('csb').value.toLowerCase();
+  const status=document.getElementById('csts').value.toLowerCase();
 
-  let rs = rows.filter(r => !isActive(r) && r.brand);
-  if (search) rs = rs.filter(r => [r.brand,r.model,r.desc,r.serial,r.tr].join(' ').toLowerCase().includes(search));
-  if (brand)  rs = rs.filter(r => r.brand.toLowerCase() === brand);
-  if (status) rs = rs.filter(r => (r.status||'').toLowerCase().includes(status));
+  let rs=rows.filter(r=>!isActive(r)&&r.brand);
+  if(search) rs=rs.filter(r=>[r.brand,r.mo,r.de,r.se,r.tr].join(' ').toLowerCase().includes(search));
+  if(brand)  rs=rs.filter(r=>r.brand.toLowerCase()===brand);
+  if(status) rs=rs.filter(r=>(r.st||'').toLowerCase().includes(status));
 
-  const allNonActive = rows.filter(r => !isActive(r) && r.brand);
-  document.getElementById('cs1').textContent = allNonActive.filter(isSold).length;
-  document.getElementById('cs2').textContent = '$' + allNonActive.filter(isSold).reduce((s,r) => s + r.pn, 0).toLocaleString();
-  document.getElementById('cs3').textContent = newTRs.size;
-  document.getElementById('cs4').textContent = allNonActive.filter(r => !isSold(r)).length;
-  document.getElementById('csc').textContent = rs.length + ' items';
+  const allNon=rows.filter(r=>!isActive(r)&&r.brand);
+  document.getElementById('cs1').textContent=allNon.filter(isSold).length;
+  document.getElementById('cs2').textContent='$'+allNon.filter(isSold).reduce((s,r)=>s+r.pn,0).toLocaleString();
+  document.getElementById('cs3').textContent=newTRs.size;
+  document.getElementById('cs4').textContent=allNon.filter(r=>!isSold(r)).length;
+  document.getElementById('csc').textContent=rs.length+' items';
 
-  const tb = document.getElementById('csb2');
-  if (!rs.length) { tb.innerHTML = '<tr><td colspan="10" class="emp">No items here yet.</td></tr>'; return; }
-  tb.innerHTML = rs.map(r => `<tr${newTRs.has(r.tr) ? ' class="new-row"' : ''}>
+  const tb=document.getElementById('csb2');
+  if(!rs.length){tb.innerHTML='<tr><td colspan="10" class="emp">No items.</td></tr>';return;}
+  tb.innerHTML=rs.map(r=>`<tr${selectedSoldTRs.has(r.tr)?' style="background:rgba(58,127,212,.12)"':''} onclick="toggleSoldRow(event,'${r.tr}')" style="cursor:pointer">
+    <td style="padding:10px 8px;" onclick="event.stopPropagation()"><input type="checkbox" class="sold-chk" data-tr="${r.tr}" ${selectedSoldTRs.has(r.tr)?'checked':''} onchange="toggleSoldRow(event,'${r.tr}')" style="cursor:pointer;width:14px;height:14px;"></td>
     <td><span class="mno">${x(r.tr)}</span></td>
     <td><strong>${x(r.brand)}</strong></td>
-    <td style="font-size:12px;color:var(--light)">${x(r.type)}</td>
-    <td><span class="mno">${x(r.model)}</span></td>
-    <td style="font-size:12px">${x(r.dial)}</td>
-    <td><span class="dsc" title="${x(r.desc)}">${x(r.desc)}</span></td>
-    <td><span class="prc">${x(r.price)}</span></td>
-    <td><span class="mno">${x(r.serial)}</span></td>
-    <td>${bdg(r.status)}</td>
+    <td style="font-size:12px;color:var(--light)">${x(r.ty)}</td>
+    <td><span class="mno">${x(r.mo)}</span></td>
+    <td style="font-size:12px">${x(r.di)}</td>
+    <td><span class="dsc" title="${x(r.de)}">${x(r.de)}</span></td>
+    <td><span class="prc">${x(r.pr)}</span></td>
+    <td><span class="mno">${x(r.se)}</span></td>
+    <td>${bdg(r.st)}</td>
   </tr>`).join('');
 }
 
-function rPriceChg(chg) {
-  // Only update if not already set by compareSnapshots
-  if (!document.getElementById('snap-from').value) {
-    document.getElementById('pc1').textContent = chg.length;
-    document.getElementById('pc2').textContent = chg.filter(c => c.pn < c.oldPn).length;
-    document.getElementById('pc3').textContent = chg.filter(c => c.pn > c.oldPn).length;
-  }
-  const tb = document.getElementById('pcb');
-  if (!chg.length) { tb.innerHTML = '<tr><td colspan="7" class="emp">No price changes this session. Hit Refresh after prices update in the sheet to detect changes.</td></tr>'; return; }
-  tb.innerHTML = chg.map(c => {
-    const d = c.pn - c.oldPn, p = c.oldPn ? ((d/c.oldPn)*100).toFixed(1) : '0';
-    return `<tr>
-      <td><span class="mno">${x(c.tr)}</span></td>
-      <td><strong>${x(c.brand)}</strong></td>
-      <td><span class="mno">${x(c.model)}</span></td>
-      <td><span class="dsc">${x(c.desc)}</span></td>
-      <td class="op">$${c.oldPn.toLocaleString()}</td>
-      <td class="np">$${c.pn.toLocaleString()}</td>
-      <td class="${d>0?'cu':'cd'}">${d>0?'▲':'▼'} $${Math.abs(d).toLocaleString()} (${p}%)</td>
-    </tr>`;
-  }).join('');
-}
-
+// ── DROPDOWNS ────────────────────────────────────────────────────────────────
 function populateDropdowns() {
-  const active   = rows.filter(isActive);
-  const nonActive = rows.filter(r => !isActive(r) && r.brand);
-  fl('ib',  uniq(active, 'brand'));
-  fl('it',  uniq(active, 'type'));
-  fl('csb', uniq(nonActive, 'brand'));
+  const active=rows.filter(isActive), nonActive=rows.filter(r=>!isActive(r)&&r.brand);
+  fl('ib',uniq(active,'brand')); fl('it',uniq(active,'ty')); fl('csb',uniq(nonActive,'brand'));
 }
+function fl(id,vals){const el=document.getElementById(id);if(!el)return;const cur=el.value;el.innerHTML='<option value="">All</option>'+vals.map(v=>`<option value="${x(v)}">${x(v)}</option>`).join('');if(vals.includes(cur))el.value=cur;}
+function uniq(rs,k){return[...new Set(rs.map(r=>r[k]).filter(Boolean))].sort();}
 
-function fl(id, vals) {
-  const el = document.getElementById(id), cur = el.value;
-  el.innerHTML = '<option value="">All</option>' + vals.map(v => `<option value="${x(v)}">${x(v)}</option>`).join('');
-  if (vals.includes(cur)) el.value = cur;
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function bdg(s){const sl=(s||'').toLowerCase();
+  if(sl.includes('in stock'))return`<span class="bs-stock">● In Stock</span>`;
+  if(sl.includes('sold'))    return`<span class="bs-sold">● Sold</span>`;
+  if(sl.includes('on hold')) return`<span class="bs-hold">● On Hold</span>`;
+  if(sl.includes('in service'))return`<span class="bs-hold">● In Service</span>`;
+  return s?`<span class="bs-other">${x(s)}</span>`:'';
 }
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function cf(k,v){flt[k]=v.toLowerCase();rInv();}
 
-function uniq(rs, k) { return [...new Set(rs.map(r => r[k]).filter(Boolean))].sort(); }
+// ── SELECTION ────────────────────────────────────────────────────────────────
+function toggleRow(e,tr){if(e.target.type==='checkbox'){if(e.target.checked)selectedTRs.add(tr);else selectedTRs.delete(tr);}else{if(selectedTRs.has(tr))selectedTRs.delete(tr);else selectedTRs.add(tr);}updateSelUI();rInv();}
+function toggleAllVisible(checked){document.querySelectorAll('.row-chk').forEach(c=>{if(checked)selectedTRs.add(c.dataset.tr);else selectedTRs.delete(c.dataset.tr);});updateSelUI();rInv();}
+function selectAll(){rows.filter(isActive).forEach(r=>selectedTRs.add(r.tr));updateSelUI();rInv();}
+function clearSel(){selectedTRs.clear();const c=document.getElementById('chk-all');if(c)c.checked=false;updateSelUI();rInv();}
+function updateSelUI(){const n=selectedTRs.size;document.getElementById('sel-count').textContent=n+' selected';document.getElementById('sel-count').style.display=n>0?'':'none';document.getElementById('clear-sel-btn').style.display=n>0?'':'none';document.getElementById('exp-sel-btn').style.display=n>0?'':'none';}
 
-function bdg(s) {
-  const sl = (s||'').toLowerCase();
-  if (sl.includes('in stock'))    return `<span class="bs-stock">● In Stock</span>`;
-  if (sl.includes('sold'))        return `<span class="bs-sold">● Sold</span>`;
-  if (sl.includes('on hold'))     return `<span class="bs-hold">● On Hold</span>`;
-  if (sl.includes('in service'))  return `<span class="bs-hold">● In Service</span>`;
-  return s ? `<span class="bs-other">${x(s)}</span>` : '';
-}
+function toggleSoldRow(e,tr){if(e.target.type==='checkbox'){if(e.target.checked)selectedSoldTRs.add(tr);else selectedSoldTRs.delete(tr);}else{if(selectedSoldTRs.has(tr))selectedSoldTRs.delete(tr);else selectedSoldTRs.add(tr);}updateSoldSelUI();rChgSold();}
+function toggleAllSold(checked){document.querySelectorAll('.sold-chk').forEach(c=>{if(checked)selectedSoldTRs.add(c.dataset.tr);else selectedSoldTRs.delete(c.dataset.tr);});updateSoldSelUI();rChgSold();}
+function clearSoldSel(){selectedSoldTRs.clear();const c=document.getElementById('chk-all-sold');if(c)c.checked=false;updateSoldSelUI();rChgSold();}
+function updateSoldSelUI(){const n=selectedSoldTRs.size;document.getElementById('sold-sel-count').textContent=n+' selected';document.getElementById('sold-sel-count').style.display=n>0?'':'none';document.getElementById('sold-clear-btn').style.display=n>0?'':'none';document.getElementById('exp-sold-sel-btn').style.display=n>0?'':'none';}
 
-function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function cf(k,v) { flt[k] = v.toLowerCase(); rInv(); }
-
+// ── EXPORT ───────────────────────────────────────────────────────────────────
 function ex(tab) {
-  const rs = tab === 'inv'     ? rows.filter(isActive)
-           : tab === 'sel'     ? rows.filter(r => selectedTRs.has(r.tr))
-           : tab === 'soldsel' ? rows.filter(r => selectedSoldTRs.has(r.tr))
-           : rows.filter(r => !isActive(r) && r.brand);
-  const h = ['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status','Notes'];
-  const d = [h, ...rs.map(r => [r.tr,r.brand,r.type,r.model,r.dial,r.desc,r.price,r.paper,r.box,r.serial,r.date,r.status,r.notes])];
-  const csv = d.map(row => row.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-  a.download = `benny-rich-${tab}-${new Date().toISOString().slice(0,10)}.csv`;
+  const rs = tab==='inv' ? rows.filter(isActive)
+           : tab==='sel' ? rows.filter(r=>selectedTRs.has(r.tr))
+           : tab==='soldsel' ? rows.filter(r=>selectedSoldTRs.has(r.tr))
+           : rows.filter(r=>!isActive(r)&&r.brand);
+  const h=['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status'];
+  const d=[h,...rs.map(r=>[r.tr,r.brand,r.ty,r.mo,r.di,r.de,r.pr,r.pa,r.bo,r.se,r.dt,r.st])];
+  const csv=d.map(row=>row.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`benny-rich-${tab}-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
-// ── SELECTION ─────────────────────────────────────────────────────────────
-function toggleRow(e, tr) {
-  if (e.target.type === 'checkbox') {
-    if (e.target.checked) selectedTRs.add(tr); else selectedTRs.delete(tr);
-  } else {
-    if (selectedTRs.has(tr)) selectedTRs.delete(tr); else selectedTRs.add(tr);
-  }
-  updateSelUI();
-  rInv();
-}
-
-function toggleAllVisible(checked) {
-  const checkboxes = document.querySelectorAll('.row-chk');
-  checkboxes.forEach(c => {
-    if (checked) selectedTRs.add(c.dataset.tr); else selectedTRs.delete(c.dataset.tr);
-  });
-  updateSelUI();
-  rInv();
-}
-
-function selectAll() {
-  rows.filter(isActive).forEach(r => selectedTRs.add(r.tr));
-  updateSelUI(); rInv();
-}
-
-function clearSel() {
-  selectedTRs.clear();
-  const chkAll = document.getElementById('chk-all');
-  if (chkAll) chkAll.checked = false;
-  updateSelUI(); rInv();
-}
-
-function updateSelUI() {
-  const n = selectedTRs.size;
-  document.getElementById('sel-count').textContent = n + ' selected';
-  document.getElementById('sel-count').style.display = n > 0 ? '' : 'none';
-  document.getElementById('clear-sel-btn').style.display = n > 0 ? '' : 'none';
-  document.getElementById('exp-sel-btn').style.display = n > 0 ? '' : 'none';
-}
-
-async function compareSoldSnapshots() {
-  const fromDate = document.getElementById('sold-snap-from').value;
-  const toDate   = document.getElementById('sold-snap-to').value;
-  if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
-  document.getElementById('sold-snap-status').textContent = 'Loading...';
-
-  const [fromMap, toMap] = await Promise.all([
-    loadSnapshotByDate(fromDate),
-    loadSnapshotByDate(toDate)
-  ]);
-
-  if (!fromMap) { document.getElementById('sold-snap-status').textContent = `No snapshot for ${fromDate}`; return; }
-  if (!toMap)   { document.getElementById('sold-snap-status').textContent = `No snapshot for ${toDate}`; return; }
-
-  // New items (in toMap but not in fromMap, or status changed to active)
-  const newItems = Object.values(toMap).filter(r => !fromMap[r.tr] && r.brand && isActive(r));
-
-  // Sold/removed items (in fromMap active but not in toMap or now non-active)
-  const removedItems = Object.values(fromMap).filter(r => {
-    if (!r.brand) return false;
-    if (!isActive(r)) return false;
-    const toRow = toMap[r.tr];
-    return !toRow || !isActive(toRow);
-  });
-
-  document.getElementById('sold-snap-status').textContent = `${fromDate} → ${toDate}`;
-  document.getElementById('sold-snap-clear').style.display = '';
-
-  // Render new items
-  const newDiv = document.getElementById('sold-snap-new');
-  if (newItems.length) {
-    newDiv.style.display = 'block';
-    document.getElementById('sold-snap-new-list').innerHTML = newItems.map(r =>
-      `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
-        <span class="mno" style="min-width:80px">${x(r.tr)}</span>
-        <strong style="min-width:60px">${x(r.brand)}</strong>
-        <span class="mno">${x(r.mo)}</span>
-        <span class="dsc">${x(r.de)}</span>
-        <span class="prc" style="margin-left:auto">${x(r.pr)}</span>
-        ${bdg(r.st)}
-      </div>`).join('');
-  } else { newDiv.style.display = 'none'; }
-
-  // Render removed items
-  const remDiv = document.getElementById('sold-snap-removed');
-  if (removedItems.length) {
-    remDiv.style.display = 'block';
-    document.getElementById('sold-snap-removed-list').innerHTML = removedItems.map(r =>
-      `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
-        <span class="mno" style="min-width:80px">${x(r.tr)}</span>
-        <strong style="min-width:60px">${x(r.brand)}</strong>
-        <span class="mno">${x(r.mo)}</span>
-        <span class="dsc">${x(r.de)}</span>
-        <span class="prc" style="margin-left:auto">${x(r.pr)}</span>
-        ${bdg(r.st)}
-      </div>`).join('');
-  } else { remDiv.style.display = 'none'; }
-}
-
-function clearSoldCompare() {
-  document.getElementById('sold-snap-new').style.display = 'none';
-  document.getElementById('sold-snap-removed').style.display = 'none';
-  document.getElementById('sold-snap-status').textContent = 'Select dates to compare';
-  document.getElementById('sold-snap-clear').style.display = 'none';
-  document.getElementById('sold-snap-from').value = '';
-  document.getElementById('sold-snap-to').value = '';
-}
-
-function toggleSoldRow(e, tr) {
-  if (e.target.type === 'checkbox') {
-    if (e.target.checked) selectedSoldTRs.add(tr); else selectedSoldTRs.delete(tr);
-  } else {
-    if (selectedSoldTRs.has(tr)) selectedSoldTRs.delete(tr); else selectedSoldTRs.add(tr);
-  }
-  updateSoldSelUI();
-  rChgSold();
-}
-
-function toggleAllSold(checked) {
-  document.querySelectorAll('.sold-chk').forEach(c => {
-    if (checked) selectedSoldTRs.add(c.dataset.tr); else selectedSoldTRs.delete(c.dataset.tr);
-  });
-  updateSoldSelUI();
-  rChgSold();
-}
-
-function clearSoldSel() {
-  selectedSoldTRs.clear();
-  const chk = document.getElementById('chk-all-sold');
-  if (chk) chk.checked = false;
-  updateSoldSelUI();
-  rChgSold();
-}
-
-function updateSoldSelUI() {
-  const n = selectedSoldTRs.size;
-  document.getElementById('sold-sel-count').textContent = n + ' selected';
-  document.getElementById('sold-sel-count').style.display = n > 0 ? '' : 'none';
-  document.getElementById('sold-clear-btn').style.display = n > 0 ? '' : 'none';
-  document.getElementById('exp-sold-sel-btn').style.display = n > 0 ? '' : 'none';
-}
-
-// Tab switching
-document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.tab,.tab-panel').forEach(e => e.classList.remove('active'));
-  b.classList.add('active');
-  document.getElementById('tab-' + b.dataset.tab).classList.add('active');
-  if (b.dataset.tab === 'price' || b.dataset.tab === 'chgsold') ensureSnapDates();
-}));
-
-// Inventory search/filter listeners
-['is','ib','it','ist'].forEach(id => {
-  const el = document.getElementById(id);
-  el.addEventListener('input', rInv);
-  el.addEventListener('change', rInv);
-});
-
-// Sort
-document.querySelectorAll('#invtbl th[data-c]').forEach(th => {
-  th.addEventListener('click', () => {
-    const c = th.dataset.c;
-    srt.dir = srt.col === c ? (srt.dir === 'asc' ? 'desc' : 'asc') : 'asc';
-    srt.col = c;
-    document.querySelectorAll('#invtbl th[data-c]').forEach(t => t.classList.remove('sa','sd'));
-    th.classList.add(srt.dir === 'asc' ? 'sa' : 'sd');
-    rInv();
-  });
-});
-
-loadSheet();
-
-// ── SNAPSHOT STATE ───────────────────────────────────────────────────────────
-let snapDates = [];          // sorted list of available snapshot filenames
-let snapCache = {};          // filename -> { tr -> row } map
-
-// ── LOAD AVAILABLE SNAPSHOT DATES ────────────────────────────────────────────
+// ── SNAPSHOT SYSTEM ──────────────────────────────────────────────────────────
 async function loadSnapDates() {
   try {
-    const r = await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots', {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    if (!r.ok) return [];
-    const files = await r.json();
-    return files.filter(f => f.name.endsWith('.csv')).map(f => f.name.replace('.csv','')).sort();
-  } catch(e) { return []; }
+    const r=await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots',{headers:{'Accept':'application/vnd.github.v3+json'}});
+    if(!r.ok)return[];
+    const files=await r.json();
+    return files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort();
+  } catch(e){return[];}
 }
 
-function fmtSnap(d) {
-  try {
-    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
-    if (m) {
-      const dt = new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`);
-      return dt.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
-    }
-    const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m2) return new Date(m2[1]+'-'+m2[2]+'-'+m2[3]).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  } catch(e) {}
+function fmtSnap(d){
+  try{
+    const m=d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
+    if(m){const dt=new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`);return dt.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true});}
+    const m2=d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m2)return new Date(m2[0]+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }catch(e){}
   return d;
 }
 
 function populateSnapSelects(dates) {
-  snapDates = dates;
-  ['cs-sel-from','cs-sel-to','pc-sel-from','pc-sel-to'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">— select —</option>' +
-      dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
+  snapDates=dates;
+  ['cs-sel-from','cs-sel-to','pc-sel-from','pc-sel-to'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— select —</option>'+dates.map(d=>`<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
   });
-  // Update snap count cards
-  const sc = document.getElementById('cs-stat-snaps');
-  if (sc) sc.textContent = dates.length;
-}
-
-function applyQuickFilter(dates, q) {
-  if (!dates.length) return [dates[0]||'', dates[0]||''];
-  const now = Date.now();
-  const toDate = dates[dates.length-1];
-  const parseDate = d => {
-    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);
-    if (m) return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`).getTime();
-    const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m2) return new Date(m2[0]).getTime();
-    return 0;
-  };
-  if (q === 'last2') return [dates[dates.length-2]||dates[0], toDate];
-  const cutoffs = { today: new Date().setHours(0,0,0,0), '2h': now-2*3600000, '24h': now-24*3600000, '7d': now-7*86400000, all: 0 };
-  const cutoff = cutoffs[q] || 0;
-  const filtered = dates.filter(d => parseDate(d) >= cutoff);
-  return [filtered[0]||dates[0], toDate];
-}
-
-async function loadSnap(date) {
-  if (snapCache[date]) return snapCache[date];
-  try {
-    const r = await fetch(`https://raw.githubusercontent.com/CHRISEVO24/benny-rich-tracker/main/snapshots/${date}.csv?t=${Date.now()}`);
-    if (!r.ok) return null;
-    const text = await r.text();
-    if (text.includes('<!DOCTYPE')) return null;
-    const map = {};
-    parseCSV(text).slice(1).forEach(row => {
-      const r2 = parseRow(row);
-      if (r2.tr) map[r2.tr] = r2;
-    });
-    snapCache[date] = map;
-    return map;
-  } catch(e) { return null; }
-}
-
-// ── CHANGES / SOLD REPORT ────────────────────────────────────────────────────
-async function runCSReport() {
-  const fromDate = document.getElementById('cs-sel-from').value;
-  const toDate   = document.getElementById('cs-sel-to').value;
-  if (!fromDate || !toDate) { alert('Select both snapshots first.'); return; }
-
-  document.getElementById('cs-run-btn').textContent = 'Loading…';
-  const [fromMap, toMap] = await Promise.all([loadSnap(fromDate), loadSnap(toDate)]);
-  document.getElementById('cs-run-btn').textContent = 'Run Report';
-
-  if (!fromMap) { alert('Could not load snapshot: ' + fromDate); return; }
-  if (!toMap)   { alert('Could not load snapshot: ' + toDate);   return; }
-
-  // New: in toMap active but not in fromMap
-  const added = Object.values(toMap).filter(r => isActive(r) && !fromMap[r.tr]);
-  // Sold: in fromMap active but not in toMap or now sold
-  const sold  = Object.values(fromMap).filter(r => isActive(r) && (!toMap[r.tr] || !isActive(toMap[r.tr])));
-  // Stock in toMap
-  const stock = Object.values(toMap).filter(isActive).length;
-
-  document.getElementById('cs-stat-added').textContent = added.length;
-  document.getElementById('cs-stat-added-sub').textContent = fromDate + ' → ' + toDate;
-  document.getElementById('cs-stat-sold').textContent   = sold.length;
-  document.getElementById('cs-stat-sold-sub').textContent = fromDate + ' → ' + toDate;
-  document.getElementById('cs-stat-stock').textContent  = stock;
-  document.getElementById('cs-stat-stock-sub').textContent = 'as of ' + fmtSnap(toDate);
-
-  const snapItem = r => `<div class="snap-item">
-    <span class="si-tr">${x(r.tr)}</span>
-    <span class="si-brand">${x(r.brand)}</span>
-    <span class="si-model">${x(r.mo)}</span>
-    <span class="si-desc">${x(r.de)}</span>
-    <span class="si-price">${x(r.pr)}</span>
-    ${bdg(r.st)}
-  </div>`;
-
-  const listAdded = document.getElementById('cs-list-added');
-  listAdded.innerHTML = added.length ? added.map(snapItem).join('') : '<div class="empty-snap">No new items between these snapshots.</div>';
-  document.getElementById('cs-count-added').textContent = added.length;
-
-  const listSold = document.getElementById('cs-list-sold');
-  listSold.innerHTML = sold.length ? sold.map(snapItem).join('') : '<div class="empty-snap">No items sold between these snapshots.</div>';
-  document.getElementById('cs-count-sold').textContent = sold.length;
-}
-
-// Quick filter buttons for CS tab
-document.querySelectorAll('.cs-qb').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.cs-qb').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const [from, to] = applyQuickFilter(snapDates, btn.dataset.q);
-    document.getElementById('cs-sel-from').value = from;
-    document.getElementById('cs-sel-to').value   = to;
-  });
-});
-
-// ── PRICE CHANGES REPORT ─────────────────────────────────────────────────────
-async function runPCReport() {
-  const fromDate = document.getElementById('pc-sel-from').value;
-  const toDate   = document.getElementById('pc-sel-to').value;
-  if (!fromDate || !toDate) { alert('Select both snapshots first.'); return; }
-
-  document.getElementById('pc-run-btn').textContent = 'Loading…';
-  const [fromMap, toMap] = await Promise.all([loadSnap(fromDate), loadSnap(toDate)]);
-  document.getElementById('pc-run-btn').textContent = 'Run Report';
-
-  if (!fromMap) { alert('Could not load: ' + fromDate); return; }
-  if (!toMap)   { alert('Could not load: ' + toDate);   return; }
-
-  const changes = Object.values(toMap).filter(r => {
-    const f = fromMap[r.tr];
-    return f && f.pn && r.pn && f.pn !== r.pn;
-  }).map(r => ({ ...r, oldPn: fromMap[r.tr].pn }));
-
-  const ups   = changes.filter(c => c.pn > c.oldPn).length;
-  const downs = changes.filter(c => c.pn < c.oldPn).length;
-
-  document.getElementById('pc-stat-up').textContent    = ups;
-  document.getElementById('pc-stat-up-sub').textContent = fromDate + ' → ' + toDate;
-  document.getElementById('pc-stat-down').textContent  = downs;
-  document.getElementById('pc-stat-down-sub').textContent = fromDate + ' → ' + toDate;
-  document.getElementById('pc-stat-total').textContent = changes.length;
-
-  const tbody = document.getElementById('pc-body');
-  if (!changes.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="emp">No price changes between these snapshots.</td></tr>';
-    return;
+  const sc=document.getElementById('cs-stat-snaps');if(sc)sc.textContent=dates.length;
+  if(dates.length>=2){
+    ['cs-sel-from','pc-sel-from'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=dates[dates.length-2];});
+    ['cs-sel-to','pc-sel-to'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=dates[dates.length-1];});
   }
-  tbody.innerHTML = changes.map(c => {
-    const diff = c.pn - c.oldPn;
-    const pct  = ((diff / c.oldPn) * 100).toFixed(1);
-    const cls  = diff > 0 ? 'cu' : 'cd';
-    return `<tr>
-      <td><span class="mno">${x(c.tr)}</span></td>
-      <td><strong>${x(c.brand)}</strong></td>
-      <td><span class="mno">${x(c.mo)}</span></td>
-      <td><span class="dsc">${x(c.de)}</span></td>
-      <td class="op">$${c.oldPn.toLocaleString()}</td>
-      <td class="np">$${c.pn.toLocaleString()}</td>
-      <td class="${cls}">${diff>0?'▲':'▼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td>
-    </tr>`;
-  }).join('');
 }
 
-// Quick filter buttons for PC tab
-document.querySelectorAll('.pc-qb').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.pc-qb').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const [from, to] = applyQuickFilter(snapDates, btn.dataset.q);
-    document.getElementById('pc-sel-from').value = from;
-    document.getElementById('pc-sel-to').value   = to;
-  });
-});
+function applyQuickFilter(q){
+  if(!snapDates.length)return;
+  const now=Date.now();
+  const toDate=snapDates[snapDates.length-1];
+  const parseD=d=>{const m=d.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})$/);if(m)return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00`).getTime();return new Date(d).getTime();};
+  let fromDate;
+  if(q==='last2'){fromDate=snapDates[snapDates.length-2]||snapDates[0];}
+  else{const cutoffs={today:new Date().setHours(0,0,0,0),'2h':now-7200000,'24h':now-86400000,'7d':now-604800000,all:0};const cut=cutoffs[q]||0;const filtered=snapDates.filter(d=>parseD(d)>=cut);fromDate=filtered[0]||snapDates[0];}
+  return[fromDate,toDate];
+}
 
-// ── AUTO LOAD SNAP DATES WHEN TAB CLICKED ────────────────────────────────────
-let snapDatesLoaded = false;
-async function ensureSnapDates() {
-  if (snapDatesLoaded && snapDates.length > 0) return;
-  const dates = await loadSnapDates();
+async function loadSnap(date){
+  if(snapCache[date])return snapCache[date];
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/CHRISEVO24/benny-rich-tracker/main/snapshots/${date}.csv?t=${Date.now()}`);
+    if(!r.ok)return null;
+    const text=await r.text();
+    if(text.includes('<!DOCTYPE'))return null;
+    const map={};
+    parseCSV(text).slice(1).forEach(row=>{const r2=parseRow(row);if(r2.tr)map[r2.tr]=r2;});
+    snapCache[date]=map;return map;
+  }catch(e){return null;}
+}
+
+async function ensureSnapDates(){
+  if(snapLoaded&&snapDates.length>0)return;
+  const dates=await loadSnapDates();
   populateSnapSelects(dates);
-  snapDatesLoaded = true;
-  if (dates.length >= 2) {
-    // Default: last 2 snapshots
-    ['cs-sel-from','pc-sel-from'].forEach(id => { const el = document.getElementById(id); if(el) el.value = dates[dates.length-2]; });
-    ['cs-sel-to','pc-sel-to'].forEach(id => { const el = document.getElementById(id); if(el) el.value = dates[dates.length-1]; });
-  }
+  snapLoaded=true;
 }
 
+// Quick buttons
+document.querySelectorAll('.cs-qb').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.cs-qb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const res=applyQuickFilter(btn.dataset.q);if(!res)return;
+  const el1=document.getElementById('cs-sel-from');const el2=document.getElementById('cs-sel-to');
+  if(el1)el1.value=res[0];if(el2)el2.value=res[1];
+}));
+document.querySelectorAll('.pc-qb').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.pc-qb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const res=applyQuickFilter(btn.dataset.q);if(!res)return;
+  const el1=document.getElementById('pc-sel-from');const el2=document.getElementById('pc-sel-to');
+  if(el1)el1.value=res[0];if(el2)el2.value=res[1];
+}));
+
+async function runCSReport(){
+  const fromDate=document.getElementById('cs-sel-from').value;
+  const toDate=document.getElementById('cs-sel-to').value;
+  if(!fromDate||!toDate){alert('Select both snapshots first.');return;}
+  const btn=document.getElementById('cs-run-btn');btn.textContent='Loading…';
+  const[fromMap,toMap]=await Promise.all([loadSnap(fromDate),loadSnap(toDate)]);
+  btn.textContent='Run Report';
+  if(!fromMap){alert('Could not load: '+fromDate);return;}
+  if(!toMap){alert('Could not load: '+toDate);return;}
+  const added=Object.values(toMap).filter(r=>isActive(r)&&!fromMap[r.tr]);
+  const sold=Object.values(fromMap).filter(r=>isActive(r)&&(!toMap[r.tr]||!isActive(toMap[r.tr])));
+  const stock=Object.values(toMap).filter(isActive).length;
+  document.getElementById('cs-stat-added').textContent=added.length;
+  document.getElementById('cs-stat-added-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('cs-stat-sold').textContent=sold.length;
+  document.getElementById('cs-stat-sold-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('cs-stat-stock').textContent=stock;
+  document.getElementById('cs-stat-stock-sub').textContent='as of '+fmtSnap(toDate);
+  const snapItem=r=>`<div class="snap-item"><span class="si-tr">${x(r.tr)}</span><span class="si-brand">${x(r.brand)}</span><span class="si-model">${x(r.mo)}</span><span class="si-desc">${x(r.de)}</span><span class="si-price">${x(r.pr)}</span>${bdg(r.st)}</div>`;
+  const la=document.getElementById('cs-list-added');la.innerHTML=added.length?added.map(snapItem).join(''):'<div class="empty-snap">No new items between these snapshots.</div>';
+  document.getElementById('cs-count-added').textContent=added.length;
+  const ls=document.getElementById('cs-list-sold');ls.innerHTML=sold.length?sold.map(snapItem).join(''):'<div class="empty-snap">No items sold between these snapshots.</div>';
+  document.getElementById('cs-count-sold').textContent=sold.length;
+}
+
+async function runPCReport(){
+  const fromDate=document.getElementById('pc-sel-from').value;
+  const toDate=document.getElementById('pc-sel-to').value;
+  if(!fromDate||!toDate){alert('Select both snapshots first.');return;}
+  const btn=document.getElementById('pc-run-btn');btn.textContent='Loading…';
+  const[fromMap,toMap]=await Promise.all([loadSnap(fromDate),loadSnap(toDate)]);
+  btn.textContent='Run Report';
+  if(!fromMap){alert('Could not load: '+fromDate);return;}
+  if(!toMap){alert('Could not load: '+toDate);return;}
+  const changes=Object.values(toMap).filter(r=>{const f=fromMap[r.tr];return f&&f.pn&&r.pn&&f.pn!==r.pn;}).map(r=>({...r,oldPn:fromMap[r.tr].pn}));
+  document.getElementById('pc-stat-up').textContent=changes.filter(c=>c.pn>c.oldPn).length;
+  document.getElementById('pc-stat-up-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('pc-stat-down').textContent=changes.filter(c=>c.pn<c.oldPn).length;
+  document.getElementById('pc-stat-down-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('pc-stat-total').textContent=changes.length;
+  const tbody=document.getElementById('pc-body');
+  if(!changes.length){tbody.innerHTML='<tr><td colspan="7" class="emp">No price changes between these snapshots.</td></tr>';return;}
+  tbody.innerHTML=changes.map(c=>{const diff=c.pn-c.oldPn;const pct=((diff/c.oldPn)*100).toFixed(1);return`<tr><td><span class="mno">${x(c.tr)}</span></td><td><strong>${x(c.brand)}</strong></td><td><span class="mno">${x(c.mo)}</span></td><td><span class="dsc">${x(c.de)}</span></td><td class="op">$${c.oldPn.toLocaleString()}</td><td class="np">$${c.pn.toLocaleString()}</td><td class="${diff>0?'cu':'cd'}">${diff>0?'▲':'▼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td></tr>`;}).join('');
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab,.tab-panel').forEach(e=>e.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='price'||b.dataset.tab==='chgsold') ensureSnapDates();
+}));
+
+// Inventory listeners
+['is','ib','it','ist'].forEach(id=>{const el=document.getElementById(id);if(el){el.addEventListener('input',rInv);el.addEventListener('change',rInv);}});
+
+// Sort
+document.querySelectorAll('#invtbl th[data-c]').forEach(th=>th.addEventListener('click',()=>{
+  const c=th.dataset.c;
+  srt.dir=srt.col===c?(srt.dir==='asc'?'desc':'asc'):'asc';srt.col=c;
+  document.querySelectorAll('#invtbl th[data-c]').forEach(t=>t.classList.remove('sa','sd'));
+  th.classList.add(srt.dir==='asc'?'sa':'sd');rInv();
+}));
+
+// Start
+loadSheet();
 </script>
 </body>
 </html>
