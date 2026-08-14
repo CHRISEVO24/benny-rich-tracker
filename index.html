@@ -99,12 +99,17 @@
     <div class="tfg"><span class="tfl">Status</span><select class="tfs" id="ist"><option value="">All Active</option><option value="in stock">In Stock</option><option value="on hold">On Hold</option><option value="in service">In Service</option></select></div>
     <span class="cb" id="ic">—</span>
     <button class="bs" onclick="loadSheet()">↻ Refresh</button>
-    <button class="bp" onclick="ex('inv')">⬇ Export</button>
+    <button class="bs" onclick="selectAll()" id="sel-all-btn">☐ Select All</button>
+    <button class="bs" onclick="clearSel()" id="clear-sel-btn" style="display:none">✕ Clear</button>
+    <span class="cb" id="sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
+    <button class="bp" onclick="ex('inv')">⬇ Export All</button>
+    <button class="bp" id="exp-sel-btn" onclick="ex('sel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
   </div>
   <div class="tw">
     <table id="invtbl">
       <thead>
         <tr>
+          <th style="width:36px;padding:10px 8px;"><input type="checkbox" id="chk-all" title="Select all visible" onchange="toggleAllVisible(this.checked)" style="cursor:pointer;width:14px;height:14px;"></th>
           <th data-c="tr">TR #</th>
           <th data-c="brand">Brand</th>
           <th data-c="type">Type</th>
@@ -119,6 +124,7 @@
           <th>Status</th>
         </tr>
         <tr class="fr">
+          <th></th>
           <th><input placeholder="…" oninput="cf('tr',this.value)"></th>
           <th><input placeholder="…" oninput="cf('brand',this.value)"></th>
           <th><input placeholder="…" oninput="cf('type',this.value)"></th>
@@ -215,6 +221,7 @@ let prevMap = {};   // tr -> priceNum for change detection
 let newTRs = new Set(); // TRs new since last load
 let flt = {};
 let srt = { col: null, dir: 'asc' };
+let selectedTRs = new Set(); // selected rows
 
 
 // Load a snapshot CSV by date from GitHub
@@ -470,8 +477,9 @@ function rInv() {
   document.getElementById('ic').textContent = rs.length + ' items';
 
   const tb = document.getElementById('invbody');
-  if (!rs.length) { tb.innerHTML = '<tr><td colspan="12" class="emp">No items match filters.</td></tr>'; return; }
-  tb.innerHTML = rs.map(r => `<tr${newTRs.has(r.tr) ? ' class="new-row"' : ''}>
+  if (!rs.length) { tb.innerHTML = '<tr><td colspan="13" class="emp">No items match filters.</td></tr>'; return; }
+  tb.innerHTML = rs.map(r => `<tr${newTRs.has(r.tr) ? ' class="new-row"' : ''}${selectedTRs.has(r.tr) ? ' style="background:rgba(58,127,212,.12)"' : ''} onclick="toggleRow(event,'${r.tr}')">
+    <td style="padding:10px 8px;" onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-tr="${r.tr}" ${selectedTRs.has(r.tr)?'checked':''} onchange="toggleRow(event,'${r.tr}')" style="cursor:pointer;width:14px;height:14px;"></td>
     <td><span class="mno">${x(r.tr)}</span></td>
     <td><strong>${x(r.brand)}</strong></td>
     <td style="font-size:12px;color:var(--light)">${x(r.type)}</td>
@@ -571,7 +579,9 @@ function x(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function cf(k,v) { flt[k] = v.toLowerCase(); rInv(); }
 
 function ex(tab) {
-  const rs = tab === 'inv' ? rows.filter(isActive) : rows.filter(r => !isActive(r) && r.brand);
+  const rs = tab === 'inv' ? rows.filter(isActive)
+           : tab === 'sel' ? rows.filter(r => selectedTRs.has(r.tr))
+           : rows.filter(r => !isActive(r) && r.brand);
   const h = ['TR#','Brand','Type','Model #','Dial','Description','Price','Paper','Box','Serial #','Date','Status','Notes'];
   const d = [h, ...rs.map(r => [r.tr,r.brand,r.type,r.model,r.dial,r.desc,r.price,r.paper,r.box,r.serial,r.date,r.status,r.notes])];
   const csv = d.map(row => row.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -579,6 +589,46 @@ function ex(tab) {
   a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
   a.download = `benny-rich-${tab}-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
+}
+
+// ── SELECTION ─────────────────────────────────────────────────────────────
+function toggleRow(e, tr) {
+  if (e.target.type === 'checkbox') {
+    if (e.target.checked) selectedTRs.add(tr); else selectedTRs.delete(tr);
+  } else {
+    if (selectedTRs.has(tr)) selectedTRs.delete(tr); else selectedTRs.add(tr);
+  }
+  updateSelUI();
+  rInv();
+}
+
+function toggleAllVisible(checked) {
+  const checkboxes = document.querySelectorAll('.row-chk');
+  checkboxes.forEach(c => {
+    if (checked) selectedTRs.add(c.dataset.tr); else selectedTRs.delete(c.dataset.tr);
+  });
+  updateSelUI();
+  rInv();
+}
+
+function selectAll() {
+  rows.filter(isActive).forEach(r => selectedTRs.add(r.tr));
+  updateSelUI(); rInv();
+}
+
+function clearSel() {
+  selectedTRs.clear();
+  const chkAll = document.getElementById('chk-all');
+  if (chkAll) chkAll.checked = false;
+  updateSelUI(); rInv();
+}
+
+function updateSelUI() {
+  const n = selectedTRs.size;
+  document.getElementById('sel-count').textContent = n + ' selected';
+  document.getElementById('sel-count').style.display = n > 0 ? '' : 'none';
+  document.getElementById('clear-sel-btn').style.display = n > 0 ? '' : 'none';
+  document.getElementById('exp-sel-btn').style.display = n > 0 ? '' : 'none';
 }
 
 // Tab switching
