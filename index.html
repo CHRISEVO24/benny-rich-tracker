@@ -162,6 +162,23 @@
     <button class="bp" onclick="ex('sold')">⬇ Export All</button>
     <button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
   </div>
+  <div class="toolbar" style="gap:12px;background:var(--surface2);border-top:none;">
+    <span style="color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;">Snapshot Compare</span>
+    <div class="tfg"><span class="tfl">From</span><input type="date" id="sold-snap-from" class="tfs" style="width:150px;"></div>
+    <div class="tfg"><span class="tfl">To</span><input type="date" id="sold-snap-to" class="tfs" style="width:150px;"></div>
+    <button class="bp" onclick="compareSoldSnapshots()">Compare</button>
+    <button class="bs" onclick="loadAvailableDates()">↻ Load Dates</button>
+    <span class="cb" id="sold-snap-status">Select dates to compare</span>
+    <button class="bs" onclick="clearSoldCompare()" id="sold-snap-clear" style="display:none">✕ Clear Compare</button>
+  </div>
+  <div id="sold-snap-new" style="display:none;padding:0 20px 8px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green);padding:12px 0 6px;">🟢 New Items Added</div>
+    <div id="sold-snap-new-list"></div>
+  </div>
+  <div id="sold-snap-removed" style="display:none;padding:0 20px 8px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);padding:12px 0 6px;">🔴 Sold / Removed Items</div>
+    <div id="sold-snap-removed-list"></div>
+  </div>
   <div class="tw">
     <table>
       <thead>
@@ -265,6 +282,8 @@ async function loadAvailableDates() {
     if (dates.length >= 2) {
       document.getElementById('snap-from').value = dates[dates.length - 2];
       document.getElementById('snap-to').value = dates[dates.length - 1];
+      document.getElementById('sold-snap-from').value = dates[dates.length - 2];
+      document.getElementById('sold-snap-to').value = dates[dates.length - 1];
       document.getElementById('snap-status').textContent = dates.length + ' snapshots available';
     } else if (dates.length === 1) {
       document.getElementById('snap-from').value = dates[0];
@@ -641,6 +660,74 @@ function updateSelUI() {
   document.getElementById('exp-sel-btn').style.display = n > 0 ? '' : 'none';
 }
 
+async function compareSoldSnapshots() {
+  const fromDate = document.getElementById('sold-snap-from').value;
+  const toDate   = document.getElementById('sold-snap-to').value;
+  if (!fromDate || !toDate) { alert('Please select both dates.'); return; }
+  document.getElementById('sold-snap-status').textContent = 'Loading...';
+
+  const [fromMap, toMap] = await Promise.all([
+    loadSnapshotByDate(fromDate),
+    loadSnapshotByDate(toDate)
+  ]);
+
+  if (!fromMap) { document.getElementById('sold-snap-status').textContent = `No snapshot for ${fromDate}`; return; }
+  if (!toMap)   { document.getElementById('sold-snap-status').textContent = `No snapshot for ${toDate}`; return; }
+
+  // New items (in toMap but not in fromMap, or status changed to active)
+  const newItems = Object.values(toMap).filter(r => !fromMap[r.tr] && r.brand && isActive(r));
+
+  // Sold/removed items (in fromMap active but not in toMap or now non-active)
+  const removedItems = Object.values(fromMap).filter(r => {
+    if (!r.brand) return false;
+    if (!isActive(r)) return false;
+    const toRow = toMap[r.tr];
+    return !toRow || !isActive(toRow);
+  });
+
+  document.getElementById('sold-snap-status').textContent = `${fromDate} → ${toDate}`;
+  document.getElementById('sold-snap-clear').style.display = '';
+
+  // Render new items
+  const newDiv = document.getElementById('sold-snap-new');
+  if (newItems.length) {
+    newDiv.style.display = 'block';
+    document.getElementById('sold-snap-new-list').innerHTML = newItems.map(r =>
+      `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
+        <span class="mno" style="min-width:80px">${x(r.tr)}</span>
+        <strong style="min-width:60px">${x(r.brand)}</strong>
+        <span class="mno">${x(r.mo)}</span>
+        <span class="dsc">${x(r.de)}</span>
+        <span class="prc" style="margin-left:auto">${x(r.pr)}</span>
+        ${bdg(r.st)}
+      </div>`).join('');
+  } else { newDiv.style.display = 'none'; }
+
+  // Render removed items
+  const remDiv = document.getElementById('sold-snap-removed');
+  if (removedItems.length) {
+    remDiv.style.display = 'block';
+    document.getElementById('sold-snap-removed-list').innerHTML = removedItems.map(r =>
+      `<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;">
+        <span class="mno" style="min-width:80px">${x(r.tr)}</span>
+        <strong style="min-width:60px">${x(r.brand)}</strong>
+        <span class="mno">${x(r.mo)}</span>
+        <span class="dsc">${x(r.de)}</span>
+        <span class="prc" style="margin-left:auto">${x(r.pr)}</span>
+        ${bdg(r.st)}
+      </div>`).join('');
+  } else { remDiv.style.display = 'none'; }
+}
+
+function clearSoldCompare() {
+  document.getElementById('sold-snap-new').style.display = 'none';
+  document.getElementById('sold-snap-removed').style.display = 'none';
+  document.getElementById('sold-snap-status').textContent = 'Select dates to compare';
+  document.getElementById('sold-snap-clear').style.display = 'none';
+  document.getElementById('sold-snap-from').value = '';
+  document.getElementById('sold-snap-to').value = '';
+}
+
 function toggleSoldRow(e, tr) {
   if (e.target.type === 'checkbox') {
     if (e.target.checked) selectedSoldTRs.add(tr); else selectedSoldTRs.delete(tr);
@@ -680,7 +767,14 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
   document.querySelectorAll('.tab,.tab-panel').forEach(e => e.classList.remove('active'));
   b.classList.add('active');
   document.getElementById('tab-' + b.dataset.tab).classList.add('active');
-  if (b.dataset.tab === 'price') loadAvailableDates();
+  if (b.dataset.tab === 'price' || b.dataset.tab === 'chgsold') loadAvailableDates();
+  // Sync date pickers between tabs
+  if (b.dataset.tab === 'chgsold') {
+    const pf = document.getElementById('snap-from');
+    const pt = document.getElementById('snap-to');
+    if (pf && pf.value) document.getElementById('sold-snap-from').value = pf.value;
+    if (pt && pt.value) document.getElementById('sold-snap-to').value = pt.value;
+  }
 }));
 
 // Inventory search/filter listeners
