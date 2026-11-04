@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Benny Rich Inc — Inventory Tracker</title>
+<title>Benny Rich Inc â Inventory Tracker</title>
 <style>
 :root {
 --gold:#B8922A; --gold-lt:#D4AC50; --gold-dim:#7A6020;
@@ -61,11 +61,11 @@ tr:hover td { background:var(--surface2); }
 .emp { padding:60px 20px; text-align:center; color:var(--muted); font-size:13px; }
 .cu { color:var(--red); font-weight:800; } .cd { color:var(--green); font-weight:800; }
 .op { color:var(--red); } .np { color:var(--green); }
-th.sa::after { content:' ▲'; font-size:9px; color:var(--gold); }
-th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
+th.sa::after { content:' â²'; font-size:9px; color:var(--gold); }
+th.sd::after { content:' â¼'; font-size:9px; color:var(--gold); }
 .new-row td { border-left:3px solid var(--green); }
 
-/* ── Snapshot picker bar (WPB style) ── */
+/* ââ Snapshot picker bar (WPC style) ââ */
 .picker-bar { display:flex; align-items:flex-end; gap:20px; padding:16px 20px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
 .picker-group { display:flex; flex-direction:column; gap:4px; }
 .picker-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
@@ -111,38 +111,38 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 <div class="lb">
 <div class="sp"></div>
 <h2 style="color:var(--text)">Benny Rich Inc</h2>
-<p style="color:var(--muted);font-size:13px;margin-top:8px;">Loading inventory from Google Sheets…</p>
+<p style="color:var(--muted);font-size:13px;margin-top:8px;">Loading inventory from Google Sheetsâ¦</p>
 </div>
 </div>
 
 <div class="tab-bar">
 <span class="logo-name">Benny Rich Inc<span class="logo-tag">Inventory</span></span>
-<button class="tab active" data-tab="inv">💎  Current Inventory</button>
-<button class="tab" data-tab="chgsold">🔄  Changes / Sold</button>
-<button class="tab" data-tab="price">💲  Price Changes</button>
+<button class="tab active" data-tab="inv">ð &nbsp;Current Inventory</button>
+<button class="tab" data-tab="chgsold">ð &nbsp;Changes / Sold</button>
+<button class="tab" data-tab="price">ð² &nbsp;Price Changes</button>
 </div>
 
-<!-- ═══ CURRENT INVENTORY ═══ -->
+<!-- âââ CURRENT INVENTORY âââ -->
 <div class="tab-panel active" id="tab-inv">
 <div class="sb">
-<div class="sc"><div class="sn" id="s1">—</div><div class="sl">In Stock</div></div>
-<div class="sc"><div class="sn" id="s2">—</div><div class="sl">Total Value</div></div>
-<div class="sc"><div class="sn" id="s3">—</div><div class="sl">Brands</div></div>
-<div class="sc"><div class="sn a" id="s4">—</div><div class="sl">On Hold</div></div>
+<div class="sc"><div class="sn" id="s1">â</div><div class="sl">In Stock</div></div>
+<div class="sc"><div class="sn" id="s2">â</div><div class="sl">Total Value</div></div>
+<div class="sc"><div class="sn" id="s3">â</div><div class="sl">Brands</div></div>
+<div class="sc"><div class="sn r" id="s4">â</div><div class="sl">On Hold</div></div>
 </div>
 <p class="lu" id="lu"></p>
 <div class="toolbar">
-<div class="sw"><span class="si">🔍</span><input type="text" id="is" placeholder="Search brand, model, description…"></div>
+<div class="sw"><span class="si">ð</span><input type="text" id="is" placeholder="Search brand, model, descriptionâ¦"></div>
 <div class="tfg"><span class="tfl">Brand</span><select class="tfs" id="ib"><option value="">All</option></select></div>
 <div class="tfg"><span class="tfl">Type</span><select class="tfs" id="it"><option value="">All</option></select></div>
 <div class="tfg"><span class="tfl">Status</span><select class="tfs" id="ist"><option value="">All Active</option><option value="in stock">In Stock</option><option value="on hold">On Hold</option><option value="in service">In Service</option></select></div>
-<span class="cb" id="ic">—</span>
-<button class="bs" onclick="loadSheet()">↻ Refresh</button>
-<button class="bs" onclick="selectAll()" id="sel-all-btn">☐ Select All</button>
-<button class="bs" onclick="clearSel()" id="clear-sel-btn" style="display:none">✕ Clear</button>
+<span class="cb" id="ic">â</span>
+<button class="bs" onclick="loadSheet()">â» Refresh</button>
+<button class="bs" onclick="selectAll()" id="sel-all-btn">â Select All</button>
+<button class="bs" onclick="clearSel()" id="clear-sel-btn" style="display:none">â Clear</button>
 <span class="cb" id="sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
-<button class="bp" onclick="ex('inv')">⬇ Export All</button>
-<button class="bp" id="exp-sel-btn" onclick="ex('sel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
+<button class="bp" onclick="ex('inv')">â¬ Export All</button>
+<button class="bp" id="exp-sel-btn" onclick="ex('sel')" style="display:none;background:var(--green)">â¬ Export Selected</button>
 </div>
 <div class="tw">
 <table id="invtbl">
@@ -164,12 +164,12 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 </tr>
 <tr class="fr">
 <th></th>
-<th><input placeholder="…" oninput="cf('tr',this.value)"></th>
-<th><input placeholder="…" oninput="cf('brand',this.value)"></th>
-<th><input placeholder="…" oninput="cf('type',this.value)"></th>
-<th><input placeholder="…" oninput="cf('model',this.value)"></th>
-<th><input placeholder="…" oninput="cf('dial',this.value)"></th>
-<th><input placeholder="…" oninput="cf('desc',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('tr',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('brand',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('type',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('model',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('dial',this.value)"></th>
+<th><input placeholder="â¦" oninput="cf('desc',this.value)"></th>
 <th></th><th></th><th></th><th></th><th></th><th></th>
 </tr>
 </thead>
@@ -178,17 +178,17 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 </div>
 </div>
 
-<!-- ═══ CHANGES / SOLD ═══ -->
+<!-- âââ CHANGES / SOLD âââ -->
 <div class="tab-panel" id="tab-chgsold">
 <!-- Picker bar -->
 <div class="picker-bar">
 <div class="picker-group">
 <div class="picker-label">From Snapshot <span class="picker-sub" id="cs-from-sub"></span></div>
-<select id="cs-sel-from"><option value="">— select —</option></select>
+<select id="cs-sel-from"><option value="">â select â</option></select>
 </div>
 <div class="picker-group">
 <div class="picker-label">To Snapshot <span class="picker-sub" id="cs-to-sub"></span></div>
-<select id="cs-sel-to"><option value="">— select —</option></select>
+<select id="cs-sel-to"><option value="">â select â</option></select>
 </div>
 <div class="quick-wrap">
 <div class="quick-label">Quick Compare</div>
@@ -205,30 +205,30 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 
 <!-- Stats bar -->
 <div class="stats-bar">
-<div class="stat"><div class="stat-icon">🟢</div><div><div class="stat-num green" id="cs-stat-added">—</div><div class="stat-lbl">New / Added</div><div class="stat-sub" id="cs-stat-added-sub">run a report</div></div></div>
-<div class="stat"><div class="stat-icon">🔴</div><div><div class="stat-num red" id="cs-stat-sold">—</div><div class="stat-lbl">Sold / Removed</div><div class="stat-sub" id="cs-stat-sold-sub">run a report</div></div></div>
-<div class="stat"><div class="stat-icon">📦</div><div><div class="stat-num" id="cs-stat-stock">—</div><div class="stat-lbl">In Stock Now</div><div class="stat-sub" id="cs-stat-stock-sub">as of "to" snapshot</div></div></div>
-<div class="stat"><div class="stat-icon">📸</div><div><div class="stat-num" id="cs-stat-snaps">—</div><div class="stat-lbl">Total Snapshots</div><div class="stat-sub">available</div></div></div>
+<div class="stat"><div class="stat-icon">ð¢</div><div><div class="stat-num green" id="cs-stat-added">â</div><div class="stat-lbl">New / Added</div><div class="stat-sub" id="cs-stat-added-sub">run a report</div></div></div>
+<div class="stat"><div class="stat-icon">ð´</div><div><div class="stat-num red" id="cs-stat-sold">â</div><div class="stat-lbl">Sold / Removed</div><div class="stat-sub" id="cs-stat-sold-sub">run a report</div></div></div>
+<div class="stat"><div class="stat-icon">ð¦</div><div><div class="stat-num" id="cs-stat-stock">â</div><div class="stat-lbl">In Stock Now</div><div class="stat-sub" id="cs-stat-stock-sub">as of "to" snapshot</div></div></div>
+<div class="stat"><div class="stat-icon">ð¸</div><div><div class="stat-num" id="cs-stat-snaps">â</div><div class="stat-lbl">Total Snapshots</div><div class="stat-sub">available</div></div></div>
 </div>
 
 <!-- Two pane results -->
 <div class="two-pane">
 <div class="pane">
-<div class="pane-header"><div class="dot green"></div><span class="pane-title">New / Added</span><span class="pane-count" id="cs-count-added">—</span></div>
+<div class="pane-header"><div class="dot green"></div><span class="pane-title">New / Added</span><span class="pane-count" id="cs-count-added">â</span></div>
 <div id="cs-list-added"><div class="empty-snap">Run a report to see new items</div></div>
 </div>
 <div class="pane">
-<div class="pane-header"><div class="dot red"></div><span class="pane-title">Sold / Removed</span><span class="pane-count" id="cs-count-sold">—</span></div>
+<div class="pane-header"><div class="dot red"></div><span class="pane-title">Sold / Removed</span><span class="pane-count" id="cs-count-sold">â</span></div>
 <div id="cs-list-sold"><div class="empty-snap">Run a report to see sold items</div></div>
 </div>
 </div>
 
 <!-- Live data section -->
 <div style="border-top:2px solid var(--border);margin-top:8px;padding:12px 20px 6px;background:var(--surface);">
-<span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Live Data — All Non-Stock Items</span>
+<span style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Live Data â All Non-Stock Items</span>
 </div>
 <div class="toolbar">
-<div class="sw"><span class="si">🔍</span><input type="text" id="css" placeholder="Search…" oninput="rChgSold()"></div>
+<div class="sw"><span class="si">ð</span><input type="text" id="css" placeholder="Searchâ¦" oninput="rChgSold()"></div>
 <div class="tfg"><span class="tfl">Brand</span><select class="tfs" id="csb" onchange="rChgSold()"><option value="">All</option></select></div>
 <div class="tfg"><span class="tfl">Status</span><select class="tfs" id="csts" onchange="rChgSold()">
 <option value="">All Non-Stock</option>
@@ -236,11 +236,11 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 <option value="on hold">On Hold</option>
 <option value="in service">In Service</option>
 </select></div>
-<span class="cb" id="csc">—</span>
+<span class="cb" id="csc">â</span>
 <span class="cb" id="sold-sel-count" style="display:none;background:var(--gold-dim);color:#fff;border-color:var(--gold-dim)">0 selected</span>
-<button class="bs" id="sold-clear-btn" onclick="clearSoldSel()" style="display:none">✕ Clear</button>
-<button class="bp" onclick="ex('sold')">⬇ Export All</button>
-<button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">⬇ Export Selected</button>
+<button class="bs" id="sold-clear-btn" onclick="clearSoldSel()" style="display:none">â Clear</button>
+<button class="bp" onclick="ex('sold')">â¬ Export All</button>
+<button class="bp" id="exp-sold-sel-btn" onclick="ex('soldsel')" style="display:none;background:var(--green)">â¬ Export Selected</button>
 </div>
 <div class="tw">
 <table>
@@ -256,10 +256,10 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 
 <!-- Summary cards for live data -->
 <div class="sb" style="padding:16px 20px;">
-<div class="sc"><div class="sn r" id="cs1">—</div><div class="sl">Sold Items</div></div>
-<div class="sc"><div class="sn r" id="cs2">—</div><div class="sl">Sold Value</div></div>
-<div class="sc"><div class="sn g" id="cs3">—</div><div class="sl">New This Session</div></div>
-<div class="sc"><div class="sn a" id="cs4">—</div><div class="sl">Other Status</div></div>
+<div class="sc"><div class="sn r" id="cs1">â</div><div class="sl">Sold Items</div></div>
+<div class="sc"><div class="sn r" id="cs2">â</div><div class="sl">Sold Value</div></div>
+<div class="sc"><div class="sn r" id="cs3">â</div><div class="sl">New This Session</div></div>
+<div class="sc"><div class="sn a" id="cs4">â</div><div class="sl">Other Status</div></div>
 </div>
 </div>
 
@@ -268,11 +268,11 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 <div class="picker-bar">
 <div class="picker-group">
 <div class="picker-label">From Snapshot <span class="picker-sub" id="pc-from-sub"></span></div>
-<select id="pc-sel-from"><option value="">— select —</option></select>
+<select id="pc-sel-from"><option value="">â select â</option></select>
 </div>
 <div class="picker-group">
 <div class="picker-label">To Snapshot <span class="picker-sub" id="pc-to-sub"></span></div>
-<select id="pc-sel-to"><option value="">— select —</option></select>
+<select id="pc-sel-to"><option value="">â select â</option></select>
 </div>
 <div class="quick-wrap">
 <div class="quick-label">Quick Compare</div>
@@ -289,9 +289,9 @@ th.sd::after { content:' ▼'; font-size:9px; color:var(--gold); }
 
 <!-- Stats bar -->
 <div class="stats-bar">
-<div class="stat"><div class="stat-icon">📈</div><div><div class="stat-num green" id="pc-stat-up">—</div><div class="stat-lbl">Price Increases</div><div class="stat-sub" id="pc-stat-up-sub">run a report</div></div></div>
-<div class="stat"><div class="stat-icon">📉</div><div><div class="stat-num red" id="pc-stat-down">—</div><div class="stat-lbl">Price Decreases</div><div class="stat-sub" id="pc-stat-down-sub">run a report</div></div></div>
-<div class="stat"><div class="stat-icon">💲</div><div><div class="stat-num" id="pc-stat-total">—</div><div class="stat-lbl">Items Changed</div><div class="stat-sub">between snapshots</div></div></div>
+<div class="stat"><div class="stat-icon">ð</div><div><div class="stat-num green" id="pc-stat-up">â</div><div class="stat-lbl">Price Increases</div><div class="stat-sub" id="pc-stat-up-sub">run a report</div></div></div>
+<div class="stat"><div class="stat-icon">ð</div><div><div class="stat-num red" id="pc-stat-down">â</div><div class="stat-lbl">Price Decreases</div><div class="stat-sub" id="pc-stat-down-sub">run a report</div></div></div>
+<div class="stat"><div class="stat-icon">ð²</div><div><div class="stat-num" id="pc-stat-total">â</div><div class="stat-lbl">Items Changed</div><div class="stat-sub">between snapshots</div></div></div>
 </div>
 
 <div class="tw">
@@ -309,21 +309,21 @@ const GID = '73934854';
 // Sheet columns (0-based):
 // 0:SKU, 1:Photo, 2:Brand, 3:Type, 4:Model#, 5:Dial, 6:Description, 7:Price,
 // 8:Date Generated, 9:#links/screw, 10:Paper, 11:Date, 12:Serial#,
-// 13:Box(detail), 14:Box(type), 15:Status, 16:More Photos/Links, 17:Notes
-const C = { TR:0, PHOTO:1, BRAND:2, TYPE:3, MODEL:4, DIAL:5, DESC:6, PRICE:7, PAPER:10, DATE:11, SERIAL:12, BOX:14, STATUS:15, NOTES:17 };
+// 13:Box, 14:Status, 15:More Photos, 16:Notes
+const C = { TR:0, PHOTO:1, BRAND:2, TYPE:3, MODEL:4, DIAL:5, DESC:6, PRICE:7, PAPER:10, DATE:11, SERIAL:12, BOX:13, STATUS:14, NOTES:16 };
 
 let rows = [], flt = {}, srt = { col:null, dir:'asc' };
 let selectedTRs = new Set(), selectedSoldTRs = new Set();
 let newTRs = new Set();
 let snapDates = [], snapCache = {}, snapLoaded = false;
 
-// ── PARSE (RFC 4180 — handles quoted fields with embedded newlines) ──────────
+// ââ PARSE (RFC 4180 â handles quoted fields with embedded newlines) ââââââââââ
 function parseCSV(text) {
   const out = [];
   let col = '', cols = [], q = false, i = 0;
   while (i < text.length) {
     const c = text[i];
-    if (q) {
+  p if (q) {
       if (c === '"') {
         if (text[i+1] === '"') { col += '"'; i += 2; continue; }
         else { q = false; i++; continue; }
@@ -359,7 +359,7 @@ function parseRow(r) {
 const isActive = r => { const s=(r.st||'').toLowerCase(); return s.includes('in stock')||s.includes('on hold')||s.includes('in service')||s.includes('consigned'); };
 const isSold = r => (r.st||'').toLowerCase().includes('sold');
 
-// ── LOAD LIVE SHEET ────────────────────────────────────────────
+// ââ LOAD LIVE SHEET ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 async function loadSheet() {
   document.getElementById('ov').style.display='flex';
   try {
@@ -383,7 +383,7 @@ async function loadSheet() {
   document.getElementById('ov').style.display='none';
 }
 
-// ── INVENTORY TAB ───────────────────────────────────────────────
+// ââ INVENTORY TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function rInv() {
   const search=(document.getElementById('is').value||'').toLowerCase();
   const brand=document.getElementById('ib').value.toLowerCase();
@@ -429,7 +429,7 @@ function rInv() {
 </tr>`).join('');
 }
 
-// ── CHANGES / SOLD TAB ───────────────────────────────────────────
+// ââ CHANGES / SOLD TAB âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function rChgSold() {
   const search=(document.getElementById('css').value||'').toLowerCase();
   const brand=document.getElementById('csb').value.toLowerCase();
@@ -463,26 +463,26 @@ function rChgSold() {
 </tr>`).join('');
 }
 
-// ── DROPDOWNS ────────────────────────────────────────────────
+// ââ DROPDOWNS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function populateDropdowns() {
   const active=rows.filter(isActive), nonActive=rows.filter(r=>!isActive(r)&&r.brand);
-  fl('ib',uniq(active,'brand')); fl('it',uniq(active,'ty')); fl('csb',uniq(nonActive,'brand'));
+  fl('ib',uniq(active,'brand')); fl('it',uniq(active,"ty')); fl('csb',uniq(nonActive,'brand'));
 }
 function fl(id,vals){const el=document.getElementById(id);if(!el)return;const cur=el.value;el.innerHTML='<option value="">All</option>'+vals.map(v=>`<option value="${x(v)}">${x(v)}</option>`).join('');if(vals.includes(cur))el.value=cur;}
 function uniq(rs,k){return[...new Set(rs.map(r=>r[k]).filter(Boolean))].sort();}
 
-// ── HELPERS ──────────────────────────────────────────────────────
+// ââ HELPERS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function bdg(s){const sl=(s||'').toLowerCase();
-  if(sl.includes('in stock'))return`<span class="bs-stock">● In Stock</span>`;
-  if(sl.includes('sold')) return`<span class="bs-sold">● Sold</span>`;
-  if(sl.includes('on hold')) return`<span class="bs-hold">● On Hold</span>`;
-  if(sl.includes('in service'))return`<span class="bs-hold">● In Service</span>`;
+  if(sl.includes('in stock'))return`<span class="bs-stock">â In Stock</span>`;
+  if(sl.includes('sold')) return`<span class="bs-sold">â Sold</span>`;
+  if(sl.includes('on hold')) return`<span class="bs-hold">â On Hold</span>`;
+  if(sl.includes('in service'))return`<span class="bs-hold">â In Service</span>`;
   return s?`<span class="bs-other">${x(s)}</span>`:'';
 }
 function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function cf(k,v){flt[k]=v.toLowerCase();rInv();}
 
-// ── SELECTION ──────────────────────────────────────────────────────
+// ââ SELECTION ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function toggleRow(e,tr){if(e.target.type==='checkbox'){if(e.target.checked)selectedTRs.add(tr);else selectedTRs.delete(tr);}else{if(selectedTRs.has(tr))selectedTRs.delete(tr);else selectedTRs.add(tr);}updateSelUI();rInv();}
 function toggleAllVisible(checked){document.querySelectorAll('.row-chk').forEach(c=>{if(checked)selectedTRs.add(c.dataset.tr);else selectedTRs.delete(c.dataset.tr);});updateSelUI();rInv();}
 function selectAll(){rows.filter(isActive).forEach(r=>selectedTRs.add(r.tr));updateSelUI();rInv();}
@@ -494,7 +494,7 @@ function toggleAllSold(checked){document.querySelectorAll('.sold-chk').forEach(c
 function clearSoldSel(){selectedSoldTRs.clear();const c=document.getElementById('chk-all-sold');if(c)c.checked=false;updateSoldSelUI();rChgSold();}
 function updateSoldSelUI(){const n=selectedSoldTRs.size;document.getElementById('sold-sel-count').textContent=n+' selected';document.getElementById('sold-sel-count').style.display=n>0?'':'none';document.getElementById('sold-clear-btn').style.display=n>0?'':'none';document.getElementById('exp-sold-sel-btn').style.display=n>0?'':'none';}
 
-// ── EXPORT ────────────────────────────────────────────────────────────────
+// ââ EXPORT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ex(tab) {
   const rs = tab==='inv' ? rows.filter(isActive)
     : tab==='sel' ? rows.filter(r=>selectedTRs.has(r.tr))
@@ -509,7 +509,7 @@ function ex(tab) {
   a.click();
 }
 
-// ── SNAPSHOT SYSTEM ───────────────────────────────────────────────────────────────
+// ââ SNAPSHOT SYSTEM ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 async function loadSnapDates() {
   try {
     const r=await fetch('https://api.github.com/repos/CHRISEVO24/benny-rich-tracker/contents/snapshots',{headers:{'Accept':'application/vnd.github.v3+json'}});
@@ -534,7 +534,7 @@ function populateSnapSelects(dates) {
   ['cs-sel-from','cs-sel-to','pc-sel-from','pc-sel-to'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const cur=sel.value;
-    sel.innerHTML='<option value="">— select —</option>'+dates.map(d=>`<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
+    sel.innerHTML='<option value="">â select â</option>'+dates.map(d=>`<option value="${d}"${d===cur?' selected':''}>${fmtSnap(d)}</option>`).join('');
   });
   const sc=document.getElementById('cs-stat-snaps');if(sc)sc.textContent=dates.length;
   if(dates.length>=2){
@@ -592,7 +592,7 @@ async function runCSReport(){
   const fromDate=document.getElementById('cs-sel-from').value;
   const toDate=document.getElementById('cs-sel-to').value;
   if(!fromDate||!toDate){alert('Select both snapshots first.');return;}
-  const btn=document.getElementById('cs-run-btn');btn.textContent='Loading…';
+  const btn=document.getElementById('cs-run-btn');btn.textContent='Loadingâ¦';
   const[fromMap,toMap]=await Promise.all([loadSnap(fromDate),loadSnap(toDate)]);
   btn.textContent='Run Report';
   if(!fromMap){alert('Could not load: '+fromDate);return;}
@@ -601,9 +601,9 @@ async function runCSReport(){
   const sold=Object.values(fromMap).filter(r=>isActive(r)&&(!toMap[r.tr]||!isActive(toMap[r.tr])));
   const stock=Object.values(toMap).filter(isActive).length;
   document.getElementById('cs-stat-added').textContent=added.length;
-  document.getElementById('cs-stat-added-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('cs-stat-added-sub').textContent=fmtSnap(fromDate)+' â '+fmtSnap(toDate);
   document.getElementById('cs-stat-sold').textContent=sold.length;
-  document.getElementById('cs-stat-sold-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('cs-stat-sold-sub').textContent=fmtSnap(fromDate)+' â '+fmtSnap(toDate);
   document.getElementById('cs-stat-stock').textContent=stock;
   document.getElementById('cs-stat-stock-sub').textContent='as of '+fmtSnap(toDate);
   const snapItem=r=>`<div class="snap-item"><span class="si-tr">${x(r.tr)}</span><span class="si-brand">${x(r.brand)}</span><span class="si-model">${x(r.mo)}</span><span class="si-desc">${x(r.de)}</span><span class="si-price">${x(r.pr)}</span>${bdg(r.st)}</div>`;
@@ -617,23 +617,23 @@ async function runPCReport(){
   const fromDate=document.getElementById('pc-sel-from').value;
   const toDate=document.getElementById('pc-sel-to').value;
   if(!fromDate||!toDate){alert('Select both snapshots first.');return;}
-  const btn=document.getElementById('pc-run-btn');btn.textContent='Loading…';
+  const btn=document.getElementById('pc-run-btn');btn.textContent='Loadingâ¦';
   const[fromMap,toMap]=await Promise.all([loadSnap(fromDate),loadSnap(toDate)]);
   btn.textContent='Run Report';
   if(!fromMap){alert('Could not load: '+fromDate);return;}
   if(!toMap){alert('Could not load: '+toDate);return;}
   const changes=Object.values(toMap).filter(r=>{const f=fromMap[r.tr];return f&&f.pn&&r.pn&&f.pn!==r.pn;}).map(r=>({...r,oldPn:fromMap[r.tr].pn}));
   document.getElementById('pc-stat-up').textContent=changes.filter(c=>c.pn>c.oldPn).length;
-  document.getElementById('pc-stat-up-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('pc-stat-up-sub').textContent=fmtSnap(fromDate)+' â '+fmtSnap(toDate);
   document.getElementById('pc-stat-down').textContent=changes.filter(c=>c.pn<c.oldPn).length;
-  document.getElementById('pc-stat-down-sub').textContent=fmtSnap(fromDate)+' → '+fmtSnap(toDate);
+  document.getElementById('pc-stat-down-sub').textContent=fmtSnap(fromDate)+' â '+fmtSnap(toDate);
   document.getElementById('pc-stat-total').textContent=changes.length;
   const tbody=document.getElementById('pc-body');
   if(!changes.length){tbody.innerHTML='<tr><td colspan="7" class="emp">No price changes between these snapshots.</td></tr>';return;}
-  tbody.innerHTML=changes.map(c=>{const diff=c.pn-c.oldPn;const pct=((diff/c.oldPn)*100).toFixed(1);return`<tr><td><span class="mno">${x(c.tr)}</span></td><td><strong>${x(c.brand)}</strong></td><td><span class="mno">${x(c.mo)}</span></td><td><span class="dsc">${x(c.de)}</span></td><td class="op">$${c.oldPn.toLocaleString()}</td><td class="np">$${c.pn.toLocaleString()}</td><td class="${diff>0?'cu':'cd'}">${diff>0?'▲':'▼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td></tr>`;}).join('');
+  tbody.innerHTML=changes.map(c=>{const diff=c.pn-c.oldPn;const pct=((diff/c.oldPn)*100).toFixed(1);return`<tr><td><span class="mno">${x(c.tr)}</span></td><td><strong>${x(c.brand)}</strong></td><td><span class="mno">${x(c.mo)}</span></td><td><span class="dsc">${x(c.de)}</span></td><td class="op">$${c.oldPn.toLocaleString()}</td><td class="np">$${c.pn.toLocaleString()}</td><td class="${diff>0?'cu':'cd'}">${diff>0?'â²':'â¼'} $${Math.abs(diff).toLocaleString()} (${pct}%)</td></tr>`;}).join('');
 }
 
-// ── TABS ───────────────────────────────────────────────────────────────────
+// ââ TABS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tab,.tab-panel').forEach(e=>e.classList.remove('active'));
   b.classList.add('active');
